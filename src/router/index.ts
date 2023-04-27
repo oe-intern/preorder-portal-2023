@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { AppLayout } from '@/components';
 import {
-  AnalyticsView, HomeView, SettingView, PreOrderView, ProductsView, DiscountsView,
+  AnalyticsView, HomeView, SettingView, PreOrderView, ProductsView,
 } from '@/views';
 
 const routes = [

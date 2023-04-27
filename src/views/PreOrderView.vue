@@ -190,6 +190,7 @@ const handleToggleCheckAll = e => {
     display: flex;
     flex-wrap: wrap;
     width: 100%;
+    align-items: center;
     .pre-order-search{
       border-bottom: 1px solid $border-color;
       display: flex;

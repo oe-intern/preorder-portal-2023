@@ -15,17 +15,18 @@ AppProvider
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, inject } from 'vue';
 import { useAuthStore } from '@/stores';
 import { AUTH_STATUS } from '@/configs';
 import { AppProvider } from '@ownego/polaris-vue';
 import createApp from '@shopify/app-bridge';
 import { getSessionToken } from '@shopify/app-bridge/utilities';
 
-console.log(window.location);
+const scaffoldingEmbeddedData = inject('scaffoldingEmbeddedData');
+
 const app = createApp({
-  apiKey: '0cb1af426f7b1bc1cdddc78b182a0ba2',
-  host: import.meta.env.VITE_API_URL,
+  apiKey: scaffoldingEmbeddedData.apiKey,
+  host: scaffoldingEmbeddedData.host,
 });
 
 const authStore = useAuthStore();

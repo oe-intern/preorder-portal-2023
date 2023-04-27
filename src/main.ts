@@ -8,7 +8,10 @@ import App from './App.vue';
 import 'bootstrap/dist/css/bootstrap-grid.min.css';
 import 'bootstrap/dist/css/bootstrap-utilities.min.css';
 
+const scaffoldingEmbeddedData = window.scaffoldingEmbeddedData;
+
 const app = createApp(App);
+
 const pinia = createPinia();
 
 //config variable scss
@@ -17,6 +20,7 @@ app.use(router);
 app.use(PolarisVue);
 
 app.provide('axios', axios);
+app.provide('scaffoldingEmbeddedData', scaffoldingEmbeddedData);
 
 router.isReady().then(() => {
   app.mount('#app');

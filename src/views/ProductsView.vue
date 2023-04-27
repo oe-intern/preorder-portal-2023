@@ -158,6 +158,7 @@ const showProduct = id => {
       display: flex;
       flex-wrap: wrap;
       width: 100%;
+      align-items: center;
       .pro-order-search{
         border-bottom: 1px solid $border-color;
         display: flex;

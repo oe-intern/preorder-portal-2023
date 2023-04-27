@@ -1,13 +1,21 @@
 <template lang="pug">
 header.fixed-top.bg-white.header-app
-  .icon-web.d-none.d-md-block
-    span.icon-header.d-none.d-md-block Icon
+  //- .icon-web.d-none.d-md-block
+  //-   span.icon-header.d-none.d-md-block Icon
   .header-face
     .header-menu.d-md-none.d-block
       .menu-item(@click="toggleModalMenu")
         MobileHamburgerMajor.icon-menu
-    .header-photo
-      .account
+    .nav-list.d-md-flex.d-none
+      router-link(exact-active-class= "nav-item-active" ,:to="{name:'home',params:{}}").nav-item
+        HomeMajor.nav-icon
+        span.nav-text Home
+      router-link(active-class="nav-item-active" ,:to="{name:'pre-order',params:{}}").nav-item
+        OrdersMajor.nav-icon
+        span.nav-text Pre-orders
+      router-link(active-class= "nav-item-active" ,:to="{name:'products',params:{}}").nav-item
+        ProductsMajor.nav-icon
+        span.nav-text Pre-order Product List
 div(v-if="isShowModalMenu").d-flex.d-md-none.nav-cover
   .nav-modal
     NavBar( :toggle-nav-menu="toggleNavMenu" ).nav-show
@@ -81,6 +89,40 @@ const toggleNavMenu = () => {
     justify-content: space-between;
     align-items: center;
     flex: 1;
+    .nav-item-active {
+      background-color: rgba($primary-color, 0.3);
+    }
+    .nav-list{
+      flex-direction: row;
+      height: 100%;
+    .nav-item {
+      margin: 0 24px;
+      width: 200px;
+      height: 100%;
+      text-align: left;
+      display: inline-flex;
+      flex-direction: row;
+      align-items: center;
+      padding: 8px 12px;
+      margin-bottom: 12px;
+      color: $dark-color;
+      &:hover {
+        background-color: rgba($primary-color, 0.3);
+      }
+
+      .nav-icon {
+        margin-right: 8px;
+        height: 20px;
+        width: 20px;
+        opacity: 0.5;
+      }
+      .nav-text{
+        flex: 1;
+        display: inline-block;
+        overflow: auto;
+      }
+    }
+  }
 
     .header-menu {
       margin-left: 24px;
