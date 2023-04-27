@@ -47,12 +47,16 @@
               span Status
               span i
           th(colspan="1").pro-customer.pro-header-item Ship date
+          th(colspan="1").pro-vendor.pro-header-item Vendor
           th(colspan="1").pro-date.pro-header-item Shell Through
           th(colspan="1").pro-color.pro-header-item Ready to fulfill
           th(colspan="1").pro-quantity.pro-header-item Stock
           th(colspan="1").pro-total.pro-header-item Price
       tbody
-        tr(@click="showProduct").table-list
+        tr(
+v-for="(product ,index) in products"
+:key="index"
+@click="showProduct(product.id)" ).table-list
           td(colspan="1").pro-check.pro-item
             label( for="all").pro-check-box
               input(
@@ -63,19 +67,20 @@
           td.product-refer.pro-item
             ul.refer-list
               li.refer-image-cover
-                .div-image
+                .div-image()
               li.refer-name
-                span.product-name Sony WF-1000XM
-          td.pro-item live
+                span.product-name {{product.title}}
+          td(:class=" product.status").pro-item {{ product.status }}
           td.product-date.pro-item
             span.date-from 19 Apr 2023
             span -
             span.date-to 22 Apr 2023
+          td.product-vendor.pro-item {{ product.vendor }}
           td.product-shell.pro-item
             .shell-header
               span.shell-title 0.00%
               span.shell-text (0/1266  units)
-            progress(max='100', value='20' ).shell-progress
+            progress(max="100", value="20" ).shell-progress
           td.product-fulfill.pro-item 0.00%(0/0 units)
           td.product-stock.pro-item 2000
           td.product-price.pro-item &eth;798
@@ -83,14 +88,30 @@
 
 <script setup>
 import SearchMajor from '@icons/SearchMajor.svg';
-import { ref } from 'vue';
+import { inject, ref } from 'vue';
+
+const axios = inject('axios');
+
+const products = ref(null);
+
+const getAllProduct = async () => {
+  try {
+    const res = await axios.get('products');
+
+    products.value = res;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+getAllProduct();
 
 const isChecked = ref(false);
 const handleToggleCheckAll = e => {
   console.log(123);
 };
-const showProduct = () => {
-  console.log(123);
+const showProduct = id => {
+  console.log(id);
 };
 </script>
 
@@ -241,7 +262,6 @@ const showProduct = () => {
                 width: 60px;
                 height: 60px;
                 .div-image{
-                background: url("https://sony.scene7.com/is/image/sonyglobalsolutions/Product%20primary%20image-1?$primaryshotproset$&fmt=png-alpha&wid=440");
                 background-size: contain;
                 width: 100%;
                 height: 100%;

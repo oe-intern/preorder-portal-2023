@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { AUTH_STATUS } from '@/configs';
+import axios from '../bootstrap/api-interceptor';
 
 interface IAuthState {
   status: string;
@@ -7,16 +8,22 @@ interface IAuthState {
 }
 
 const defaultState: IAuthState = {
-  status: AUTH_STATUS.initial,
+  status: AUTH_STATUS.success,
   token: '',
 };
 
 export const useAuthStore = defineStore({
   id: 'auth',
 
-  state: () => defaultState,
+  state: () =>
+
+    defaultState,
 
   getters: {},
 
-  actions: {},
+  actions: {
+    loadedToken(token: any) {
+      axios.defaults.headers.common.Authorization = `Bearer ${token}`;
+    },
+  },
 });

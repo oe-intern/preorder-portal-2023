@@ -9,7 +9,7 @@
   //-   .progress-bar
   .nav-list
     router-link(exact-active-class= "nav-item-active" ,:to="{name:'home',params:{}}",@click="props.toggleNavMenu").nav-item
-      HomeMajor.nav-icon
+      home-mar.nav-icon
       span.nav-text Home
     router-link(active-class="nav-item-active" ,:to="{name:'pre-order',params:{}}",@click="props.toggleNavMenu").nav-item
       OrdersMajor.nav-icon
@@ -30,7 +30,6 @@ import ProductsMajor from '@icons/ProductsMajor.svg';
 import SettingsMajor from '@icons/SettingsMajor.svg';
 
 const props = defineProps(['toggleNavMenu']);
-
 </script>
 
 <style scope lang="scss">

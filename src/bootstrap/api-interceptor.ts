@@ -17,6 +17,9 @@ instance.interceptors.response.use(
        * Do something with response error
        * 401 mean not authorized or token expired, should login again
        */
+      // console.log(error.response.data);
+      // console.log(error.response.status);
+
       if (status === 401) {
         // TODO: handle this case
       }
