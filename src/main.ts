@@ -19,8 +19,8 @@ app.use(pinia);
 app.use(router);
 app.use(PolarisVue);
 
-app.provide('axios', axios);
 app.provide('scaffoldingEmbeddedData', scaffoldingEmbeddedData);
+app.provide('axios', axios);
 
 router.isReady().then(() => {
   app.mount('#app');

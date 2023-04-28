@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { AppLayout } from '@/components';
 import {
-  AnalyticsView, HomeView, SettingView, PreOrderView, ProductsView,
+  HomeView, SettingView, PreOrderView, ProductsView, ProductDetailsView,
 } from '@/views';
 
 const routes = [
@@ -13,11 +13,6 @@ const routes = [
         path: '',
         name: 'home',
         component: HomeView,
-      },
-      {
-        path: '/analytics',
-        name: 'analytics',
-        component: AnalyticsView,
       },
       {
         path: '/pre-order',
@@ -33,6 +28,11 @@ const routes = [
         path: '/setting',
         name: 'setting',
         component: SettingView,
+      },
+      {
+        path: '/product/{id}',
+        name: 'details-product',
+        component: ProductDetailsView,
       },
     ],
   },

@@ -5,7 +5,7 @@
       span Product pro-order List
     .content-header
       button.btn-fulfill(:class="{'no-blur' : isChecked}") Ready to FulFill
-      button.btn-fulfill.no-blur Add new product
+      button(@click="handelAddNewProduct").btn-fulfill.no-blur Add new product
   .pro-order-task-bar
     .pro-order-search
       label(for="searchProduct").search-icon
@@ -87,12 +87,22 @@ v-for="(product ,index) in products"
 </template>
 
 <script setup>
+import { useRouter } from 'vue-router';
 import SearchMajor from '@icons/SearchMajor.svg';
 import { inject, ref } from 'vue';
+
+const router = useRouter();
 
 const axios = inject('axios');
 
 const products = ref(null);
+
+const handelAddNewProduct = () => {
+  router.push({
+    name: 'details-product',
+    params: {},
+  });
+};
 
 const getAllProduct = async () => {
   try {
