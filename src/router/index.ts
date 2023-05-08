@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { AppLayout } from '@/components';
 import {
-  HomeView, SettingView, PreOrderView, ProductsView, ProductDetailsView,
+  HomeView, SettingView, PreOrderView, ProductsView, ProductDetailsView, AddPreProductView,
 } from '@/views';
 
 const routes = [
@@ -31,8 +31,13 @@ const routes = [
       },
       {
         path: '/product/{id}',
-        name: 'details-product',
+        name: 'detailsProduct',
         component: ProductDetailsView,
+      },
+      {
+        path: '/add-pre-product',
+        name: 'addPreProduct',
+        component: AddPreProductView,
       },
     ],
   },

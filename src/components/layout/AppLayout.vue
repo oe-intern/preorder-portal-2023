@@ -1,14 +1,11 @@
 <template lang="pug">
 Header
 .d-flex.under-header
-  //- .nav-app.bg-white.d-none.d-md-block
-  //-   NavBar
   .content-app
     router-view.content
 </template>
 
-<script setup>
-// import NavBar from './NavBar.vue';
+<script setup >
 import Header from './Header.vue';
 </script>
 

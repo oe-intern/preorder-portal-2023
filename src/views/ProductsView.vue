@@ -99,7 +99,7 @@ const products = ref(null);
 
 const handelAddNewProduct = () => {
   router.push({
-    name: 'details-product',
+    name: 'addPreProduct',
     params: {},
   });
 };
@@ -121,7 +121,10 @@ const handleToggleCheckAll = e => {
   console.log(123);
 };
 const showProduct = id => {
-  console.log(id);
+  router.push({
+    name: 'detailsProduct',
+    params: {},
+  });
 };
 </script>
 

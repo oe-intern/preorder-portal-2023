@@ -8,13 +8,22 @@
   //-     span 4/5
   //-   .progress-bar
   .nav-list
-    router-link(exact-active-class= "nav-item-active" ,:to="{name:'home',params:{}}",@click="props.toggleNavMenu").nav-item
+    router-link(
+    exact-active-class= "nav-item-active" ,
+    :to="{name:'home',params:{}}",
+    @click="props.toggleNavMenu").nav-item
       HomeMajor.nav-icon
       span.nav-text Home
-    router-link(active-class="nav-item-active" ,:to="{name:'pre-order',params:{}}",@click="props.toggleNavMenu").nav-item
+    router-link(
+    active-class="nav-item-active" ,
+    :to="{name:'pre-order',params:{}}",
+    @click="props.toggleNavMenu").nav-item
       OrdersMajor.nav-icon
       span.nav-text Pre-orders
-    router-link(active-class= "nav-item-active" ,:to="{name:'products',params:{}}",@click="props.toggleNavMenu").nav-item
+    router-link(
+    active-class= "nav-item-active" ,
+    :to="{name:'products',params:{}}",
+    @click="props.toggleNavMenu").nav-item
       ProductsMajor.nav-icon
       span.nav-text Pre-order Product List
     //- router-link(active-class= "nav-item-active" ,:to="{name:'setting',params:{}}",@click="props.toggleNavMenu").nav-item

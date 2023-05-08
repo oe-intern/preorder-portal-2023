@@ -3,4 +3,5 @@ export { default as ProfileView } from './ProfileView.vue';
 export { default as SettingView } from './SettingView.vue';
 export { default as PreOrderView } from './PreOrderView.vue';
 export { default as ProductsView } from './ProductsView.vue';
-export {default as ProductDetailsView} from './ProductDetailsView.vue';
+export { default as ProductDetailsView } from './ProductDetailsView.vue';
+export { default as AddPreProductView } from './AddPreProductView.vue';
