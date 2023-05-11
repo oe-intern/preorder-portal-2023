@@ -54,17 +54,15 @@
                 th.stock-column Variant
                 th.stock-column Value
             tbody
-              tr(v-for="(variant, index) in variants" :key="variant.id")
+              tr(v-for="(variant) in variants" :key="variant.id")
                 td.units.units-name
                   span.variant-name {{ variant.title_var }}
                   span.variant-sku {{ variant.sku }}
                 td
                   input(
-  v-model="variantStocks[index].stock"
   type="number"
   step="1"
-  min="0"
-  value="0").item-stock-input
+  min="0").item-stock-input
         .product-ship-date
           h1.text-edit Edit Shipping Date
           .calendar-cover
@@ -131,11 +129,11 @@ onMounted(() => {
       console.log(response);
       variants.value = response;
     })
-    .then(()=>{
-      variants.forEach((element, index) => {
-        variantsStock[index].id = element.id;
-      });
-    })
+    // .then(() => {
+    //   variants.value.forEach((element, index) => {
+    //     variantsStock[index].id = element.id;
+    //   });
+    // })
     .catch(error => {
       console.log(error);
     });

@@ -164,14 +164,14 @@ const submit = () => {
   console.log(selectedDate.value);
   fields.date_start = selectedDate.value.start;
   fields.date_end = selectedDate.value.end;
-  fields.variants_stock = variantStocks.value;
-  axios.post('/products/active',fields)
-  .then(response => {
-    console.log(response);
-  })
-  .catch(error => {
-    errors.value = error.response.data;
-  });
+  fields.variants_stock = variantStocks.value;//mot mang cac object voi key la id cua variant va value la inventory cua no
+  axios.post('/products/active', fields)
+    .then(response => {
+      console.log(response);
+    })
+    .catch(error => {
+      errors.value = error.response.data.errors;
+    });
 };
 
 </script>
