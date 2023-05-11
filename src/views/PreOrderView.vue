@@ -30,7 +30,7 @@ placeholder="Filter Pre-orders").search-input
           option(value="onPreOrder").sort-by-item On Pre-Order
           option(value="readyToFullfil").sort-by-item Ready to Fullfil
   .pre-order-list
-    table.preo-order-table
+    table.pre-order-table.overflow-column.separate-border
       thead
         tr.table-bar
           th(colspan="1").pre-check.pre-header-item
@@ -45,9 +45,9 @@ value="checkAllList",
           th(colspan="1").pre-customer.pre-header-item Customer
           th(colspan="1").pre-date.pre-header-item Date
           th(colspan="1").pre-status.pre-header-item
-            div
+            div.status-cover
               span Status
-              span i
+              InfoMinor.status-icon
           th(colspan="1").pre-quantity.pre-header-item Quantity
           th(colspan="1").pre-total.pre-header-item Total
       tbody
@@ -79,72 +79,31 @@ value="1",
           td.product-status.pre-item open
           td.product-quantity.pre-item 2
           td.product-total.pre-item &eth;798
-        tr.table-list
-          td(colspan="1").pre-check.pre-item
-            label( for="all").pre-check-box
-              input(
-type="checkbox",
-name="checkList",
-value="1",
-@change="handleToggleCheck").pre-check-box
-          td.product-refer.pre-item
-            ul.refer-list
-              li.refer-image-cover
-                .div-image
-              li.refer-name
-                span.product-name Sony WF-1000XM4
-                span.refer-type Pro
-                span.refer-price &eth;349
-          td.product-shopify-id.pre-item
-            router-link(:to="{name:'pre-order',params:{}}") 123123
-          td.product-customer.pre-item
-            router-link(to="#")
-              ul
-                li.customer-name Nguyen Tien Dat
-                li.customer-email dat2552002@gmail.com
-                li.customer-location Thi tran Phuc Tho, Phuc Tho, Ha Noi, Viet Nam
-          td.product-date.pre-item 19 Apr 2023
-          td.product-status.pre-item open
-          td.product-quantity.pre-item 2
-          td.product-total.pre-item &eth;798
-        tr.table-list
-          td(colspan="1").pre-check.pre-item
-            label( for="all").pre-check-box
-              input(
-type="checkbox",
-name="checkList",
-value="1",
-@change="handleToggleCheck").pre-check-box
-          td.product-refer.pre-item
-            ul.refer-list
-              li.refer-image-cover
-                .div-image
-              li.refer-name
-                span.product-name Sony WF-1000XM4
-                span.refer-type Pro
-                span.refer-price &eth;349
-          td.product-shopify-id.pre-item
-            router-link(:to="{name:'pre-order',params:{}}") 123123
-          td.product-customer.pre-item
-            router-link(to="#")
-              ul
-                li.customer-name Nguyen Tien Dat
-                li.customer-email dat2552002@gmail.com
-                li.customer-location Thi tran Phuc Tho, Phuc Tho, Ha Noi, Viet Nam
-          td.product-date.pre-item 19 Apr 2023
-          td.product-status.pre-item open
-          td.product-quantity.pre-item 2
-          td.product-total.pre-item &eth;798
 </template>
 
 <script setup>
+import InfoMinor from '@icons/InfoMinor.svg';
 import SearchMajor from '@icons/SearchMajor.svg';
-import { ref } from 'vue';
+import {
+  onMounted, ref, inject,
+} from 'vue';
 
+const preOrders = ref([]);
+const axios = inject('axios');
 const isChecked = ref(false);
 const handleToggleCheckAll = e => {
   console.log(123);
 };
+
+onMounted(() => {
+  axios.get('/pre-order')
+    .then(response => {
+      preOrders.value = response;
+    })
+    .catch(error => {
+      console.log(error);
+    });
+});
 </script>
 
 <style scope lang='scss'>
@@ -258,17 +217,29 @@ const handleToggleCheckAll = e => {
   .pre-order-list{
     width: 100%;
     margin-top: 40px;
-    display: block;
-    overflow-x: auto;
-    .preo-order-table{
+    .pre-order-table{
+      display: block;
+      overflow-x: auto;
       width: 100%;
-      border: 1px solid $border-color;
-      border-radius: 5px;
       font-size: 1rem;
       min-height: 100px;
       .table-bar{
         width: 100%;
         height: 40px;
+        .status-cover{
+            display: flex;
+            align-items: center;
+            position: relative;
+          }
+          .status-icon{
+            width: 20px;
+            height: 20px;
+            margin-left: 4px;
+            position: absolute;
+            top: calc(50% - 1px);
+            transform: translateY(-50%);
+            left: 45px;
+          }
         .pre-header-item{
           color: rgba($primary-color, 1.5);
           font-style: italic;
@@ -285,7 +256,6 @@ const handleToggleCheckAll = e => {
           line-height: 1.5;
           font-size: 0.875rem;
           color: #333;
-          border-top: 1px solid $border-color;
           .refer-list{
             padding: 0;
             display: flex;
@@ -297,7 +267,6 @@ const handleToggleCheckAll = e => {
                 width: 60px;
                 height: 60px;
                 .div-image{
-                background: url("https://sony.scene7.com/is/image/sonyglobalsolutions/Product%20primary%20image-1?$primaryshotPreset$&fmt=png-alpha&wid=440");
                 background-size: contain;
                 width: 100%;
                 height: 100%;

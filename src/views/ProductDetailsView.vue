@@ -6,104 +6,71 @@
         .btn-back
           CircleLeftMajor.back-icon
           span.btn-header-text back to previous page
-      h1.text-content Lark Dress
+      h1.text-content {{ productDetails.title }}
     .btn-function
-      button.btn Cancel
-      button.btn.btn-danger Delete
-      button.btn.btn-primary.m-s-1 Update
-      button.btn.btn-primary Ready to Fulfill
+      button.btn.btn-danger(@click="deleteProduct") Delete
+      button.btn.btn-primary.m-s-1(@click="updateProduct") Update
+      button.btn.btn-primary(@click="fullfilProduct") Ready to Fulfill
   .body-product
     .info-details-product
       .product-info
         .edit-header
           span.edit-header-text Summary
           .edit-header-content
-            span.edit-status Live
+            span(:class="productDetails.status ===1 ? 'active' : 'inactive' ").edit-status {{productDetails.status ===1 ? 'active' : 'inactive'}}
         .product-summary
-          image(src="https://cdn.shopify.com/s/files/1/0751/8044/1914/products/5236317800_2_3_2.jpg?v=1681703190").summary-photo
+          .summary-photo(:style="{backgroundImage: 'url('+productDetails.image_src+')'} ")
           .summary-content
-            h1.summary-name-product Lark Dress
+            h1.summary-name-product {{ productDetails.title }}
             .summary-ship-date Apr 20 – May 4, 2023
-            .summary-create-at Created on 19 Apr 2023
+            .summary-create-at Created on {{ DateCreated }}
         .variant-info-cover
-          table.variant-table
+          table.variant-table.separate-border
             thead
               tr
                 th.units Variant
                 th.units.units-buy Buy Size
+                th.units.units-cancel PreOrder
                 th.units.units-sold Sold
-                th.units.units-cancel Canceled
-                th.units.units-unsold Unsold
-                th.units.units-exported Exported
             tbody
               tr.total-item
                 td.units Totals
                 td.units.units-buy 1266
                 td.units.units-sold 0
                 td.units.units-cancel 0
-                td.units.units-unsold 1266
-                td.units.units-exported 0
-              tr.variant-item
+              tr(v-for="variant in variants" :key="variant.id").variant-item
                 td.units.units-name
-                  span.variant-name 36 / black
-                  span.variant-sku 21561
-                td.units.units-buy 1230
-                td.units.units-sold 0
-                td.units.units-cancel 0
-                td.units.units-unsold 1230
-                td.units.units-exported 0
-              tr.variant-item
-                td.units.units-name
-                  span.variant-name 38 / black
-                  span.variant-sku 21562
-                td.units.units-buy 16
-                td.units.units-sold 0
-                td.units.units-cancel 0
-                td.units.units-unsold 16
-                td.units.units-exported 0
-              tr.variant-item
-                td.units.units-name
-                  span.variant-name 40 / black
-                  span.variant-sku 21563
-                td.units.units-buy 10
-                td.units.units-sold 0
-                td.units.units-cancel 0
-                td.units.units-unsold 10
-                td.units.units-exported 0
-              tr.variant-item
-                td.units.units-name
-                  span.variant-name 42 / black
-                  span.variant-sku 21564
-                td.units.units-buy 10
-                td.units.units-sold 0
-                td.units.units-cancel 0
-                td.units.units-unsold 10
-                td.units.units-exported 0
+                  span.variant-name {{ variant.title }}
+                  span.variant-sku {{ variant.sku }}
+                td.units.units-buy {{ variant.inventory }}
+                td.units.units-sold {{ variant.preOrder }}
+                td.units.units-cancel {{ variant.sold }}
       .product-edit
         .product-stock
           h1.text-edit Edit stock levels
-          table.list-edit-stock
+          table.list-edit-stock.separate-border
             thead
               tr
-                th.stock-column SKU
+                th.stock-column Variant
                 th.stock-column Value
             tbody
-              tr
+              tr(v-for="(variant, index) in variants" :key="variant.id")
                 td.units.units-name
-                  span.variant-name 42 / black
-                  span.variant-sku 21564
+                  span.variant-name {{ variant.title_var }}
+                  span.variant-sku {{ variant.sku }}
                 td
                   input(
+  v-model="variantStocks[index].stock"
   type="number"
   step="1"
   min="0"
   value="0").item-stock-input
         .product-ship-date
-          h1.text-edit Edit stock levels
+          h1.text-edit Edit Shipping Date
           .calendar-cover
             DatePicker(
     v-model="selectedDate"
-    allow-range=" true"
+    allow-range="true"
     :month="pickerView.month"
     :year="pickerView.year"
     @change="handleChange"
@@ -111,28 +78,88 @@
               )
 </template>
 
-<script setup lang="ts">
+<script setup>
 import CircleLeftMajor from '@icons/CircleLeftMajor.svg';
-import { ref, reactive } from 'vue';
+import {
+  ref, reactive, inject, onMounted, defineProps,
+} from 'vue';
+
+//
+const axios = inject('axios');
+
+const props = defineProps(['id']);
+
+const productDetails = ref({});
+
+const variantsStock = ref([]);
+
+const fields = ref({});
+
+const variants = ref({});
+
+const DateCreated = ref('');
+//Date
+const today= new Date();
+const dayNow = today.getDate();
+const monthNow = today.getMonth();
+const yearNow = today.getFullYear();
 
 const selectedDate = ref({
-  start: new Date('12/1/2023'),
-  end: new Date('25/1/2023'),
+  start: today,
+  end: new Date('2023/5/14'),
 });
 
 const pickerView = reactive({
-  month: 1,
-  year: 2023,
+  month: monthNow,
+  year: yearNow,
 });
 
-const handleChange = (date: any) => {
+const handleChange = date => {
   console.log(date);
+  console.log(selectedDate.value);
 };
 
 const handleMonthChange = ({ month, year }) => {
   pickerView.month = month;
   pickerView.year = year;
 };
+
+onMounted(() => {
+  console.log(props.id);
+  axios.get(`/products/${props.id}`)
+    .then(response => {
+      console.log(response);
+      variants.value = response;
+    })
+    .then(()=>{
+      variants.forEach((element, index) => {
+        variantsStock[index].id = element.id;
+      });
+    })
+    .catch(error => {
+      console.log(error);
+    });
+
+  axios.get('/products')
+    .then(response => {
+      productDetails.value = response.find(element => element.id.toString() === props.id);
+      console.log(productDetails.value);
+      const dateObject = new Date(productDetails.value.created_at);
+      const options = {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      };
+
+      DateCreated.value = dateObject.toLocaleDateString('en-US', options);
+    })
+    .catch(
+      error => {
+        console.log(error);
+      },
+    );
+});
+
 </script>
 
 <style scope lang="scss">
@@ -164,10 +191,6 @@ const handleMonthChange = ({ month, year }) => {
         margin-right: 16px;
       }
       .edit-header-content{
-        box-shadow: rgba(15, 212, 15,0.1) 1px 1px 1px 1px;
-        background-color: rgba(15, 212, 15, 0.1);
-        border-radius: 5px;
-        padding: 4px 12px;
         .edit-status{
           color: $dark-color;
           font-weight: 600;
@@ -180,11 +203,13 @@ const handleMonthChange = ({ month, year }) => {
       flex-direction: row;
       align-items: center;
       .summary-photo{
-        border-radius: 20px;
-        width: 60px;
-        height: auto;
-        object-fit: cover;
-        margin: 0 20px;
+        display: block;
+        width: 80px;
+        height: 80px;
+        background-size: cover;
+        margin-left: 24px;
+        margin-right:24px;
+        border-radius: 5px;
       }
     }
     .variant-info-cover{

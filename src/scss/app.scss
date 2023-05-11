@@ -55,7 +55,41 @@ li {
 	opacity: 0.5;
 }
 
-table tr{
+img {
+	overflow-clip-margin: content-box;
+	overflow: clip;
+}
+
+table{
+	border-collapse: collapse;
+	&::-webkit-scrollbar {
+    height: 7px;
+	}
+	&::-webkit-scrollbar-thumb {
+    background: rgb(153, 153, 153);
+    border-radius: 10px;
+	}
+}
+
+img, svg {
+	vertical-align: middle;
+}
+
+img {
+	border-style: none;
+}
+
+*, :after, :before {
+	box-sizing: border-box;
+}
+
+user agent stylesheet
+img {
+	overflow-clip-margin: content-box;
+	overflow: clip;
+}
+
+table.separate-border tr{
 	border-bottom: 1px solid rgb(204, 204, 204)!important;
 }
 
@@ -65,4 +99,78 @@ th,td{
     text-align: left;
     vertical-align: middle;
     white-space: nowrap;
+}
+
+.live,.active{
+	display: inline-flex;
+	-webkit-box-align: center;
+	align-items: center;
+	color: rgb(14, 98, 69);
+	background-color: rgb(203, 244, 201);
+	font-size: 12px;
+	font-weight: 600;
+	line-height: 1;
+	padding: 5px 8px 4px;
+	border-radius: 3px;
+	cursor: auto;
+}
+
+.pause{
+	display: inline-flex;
+    -webkit-box-align: center;
+    align-items: center;
+    color: rgb(98, 34, 14);
+    background-color: rgb(244, 201, 201);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    padding: 5px 8px 4px;
+    border-radius: 3px;
+    cursor: auto;
+}
+
+.close{
+	display: inline-flex;
+    -webkit-box-align: center;
+    align-items: center;
+    color: rgb(79, 86, 107);
+    background-color: rgb(227, 232, 238);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    padding: 5px 8px 4px;
+    border-radius: 3px;
+    cursor: auto;
+}
+
+.overflow-column{
+	background-color: white!important;
+}
+
+.overflow-column tbody tr td:nth-child(2) {
+	position: sticky;
+	background-color: white;
+	z-index: 100;
+	left: 60px;
+}
+
+.overflow-column tbody tr td:first-child {
+	position: sticky;
+	background-color: white;
+	z-index: 100;
+	left: 0px;
+}
+
+.overflow-column thead tr th:nth-child(2) {
+	position: sticky;
+	background-color: white;
+	z-index: 100;
+	left: 60px;
+}
+
+.overflow-column thead tr th:first-child {
+	position: sticky;
+	background-color: white;
+	z-index: 100;
+	left: 0px;
 }

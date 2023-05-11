@@ -9,7 +9,6 @@ AppProvider
     .processing-section
       .error-section(v-if="isAppError")
         // TODO: handle error
-
       .loading-section
         // TODO: handle loading section (Spinner, loading icon...)
 </template>
@@ -19,6 +18,7 @@ import { computed, inject } from 'vue';
 import { useAuthStore } from '@/stores';
 import { AUTH_STATUS } from '@/configs';
 import { AppProvider } from '@ownego/polaris-vue';
+//appBridge
 import createApp from '@shopify/app-bridge';
 import { getSessionToken } from '@shopify/app-bridge/utilities';
 

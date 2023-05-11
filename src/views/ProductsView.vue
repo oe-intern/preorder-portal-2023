@@ -31,50 +31,53 @@
           option(value="onproOrder").sort-by-item On pro-Order
           option(value="readyToFullfil").sort-by-item Ready to Fullfil
   .pro-order-list
-    table.proo-order-table
+    table.pro-order-table.overflow-column.separate-border
       thead
         tr.table-bar
           th(colspan="1").pro-check.pro-header-item
-            label( for="all").pro-check-cover
+            label( for="pro-check-all").pro-check-cover
               input(
+  v-model="isCheckedAll",
   type="checkbox",
-  name="checkList",
-  value="checkAllList",
   @change="handleToggleCheckAll").pro-check-box#pro-check-all
           th(colspan="1").pro-reference.pro-header-item Product
           th(colspan="1").pro-status.pro-header-item
-            div
+            div.status-cover
               span Status
-              span i
-          th(colspan="1").pro-customer.pro-header-item Ship date
+              InfoMinor.status-icon
+          th(colspan="1").pro-customer.pro-header-item Date Start
+          th(colspan="1").pro-customer.pro-header-item Date End
           th(colspan="1").pro-vendor.pro-header-item Vendor
           th(colspan="1").pro-date.pro-header-item Shell Through
           th(colspan="1").pro-color.pro-header-item Ready to fulfill
-          th(colspan="1").pro-quantity.pro-header-item Stock
-          th(colspan="1").pro-total.pro-header-item Price
       tbody
         tr(
 v-for="(product ,index) in products"
 :key="index"
-@click="showProduct(product.id)" ).table-list
+).table-list
           td(colspan="1").pro-check.pro-item
-            label( for="all").pro-check-box
+            label( :for="product.id").pro-check-cover
               input(
+  :id="product.id",
+  :ref="checkItem",
+  v-model="productCheck",
   type="checkbox",
-  name="checkList",
-  value="1",
-  @change="handleToggleCheck").pro-check-box
+  :value="product.id",
+  @change="handleCheckbox",
+  ).pro-check-box.pro-check-item
           td.product-refer.pro-item
-            ul.refer-list
-              li.refer-image-cover
-                .div-image()
-              li.refer-name
-                span.product-name {{product.title}}
-          td(:class=" product.status").pro-item {{ product.status }}
+            div(style="margin-left: 24px;")
+              ul.refer-list(@click.prevent="showProduct(product.id)")
+                li.refer-image-cover
+                  .div-image(:style="{backgroundImage: 'url('+product.image_src+')'} ")
+                li.refer-name
+                  span.product-name {{product.title}}
+          td.pro-item
+            span(:class="product.status=== 1 ? 'active' : 'inactive' ") {{ product.status=== 1 ? 'active' : 'inactive' }}
           td.product-date.pro-item
-            span.date-from 19 Apr 2023
-            span -
-            span.date-to 22 Apr 2023
+            span.date-from {{ product.date_start ? product.date_start :'unset' }}
+          td.product-date.pro-item
+            span.date-to {{ product.date_end ? product.date_end : 'unset' }}
           td.product-vendor.pro-item {{ product.vendor }}
           td.product-shell.pro-item
             .shell-header
@@ -82,21 +85,30 @@ v-for="(product ,index) in products"
               span.shell-text (0/1266  units)
             progress(max="100", value="20" ).shell-progress
           td.product-fulfill.pro-item 0.00%(0/0 units)
-          td.product-stock.pro-item 2000
-          td.product-price.pro-item &eth;798
 </template>
 
 <script setup>
 import { useRouter } from 'vue-router';
+import InfoMinor from '@icons/InfoMinor.svg';
 import SearchMajor from '@icons/SearchMajor.svg';
-import { inject, ref } from 'vue';
+import {
+  inject, ref, onMounted,
+} from 'vue';
 
+const productCheck = ref([]);
 const router = useRouter();
+
+const isCheckedAll = ref(false);
 
 const axios = inject('axios');
 
 const products = ref(null);
 
+const arrayId = ref([]);
+
+//function always run
+
+//function run when call
 const handelAddNewProduct = () => {
   router.push({
     name: 'addPreProduct',
@@ -104,28 +116,51 @@ const handelAddNewProduct = () => {
   });
 };
 
-const getAllProduct = async () => {
-  try {
-    const res = await axios.get('products');
-
-    products.value = res;
-  } catch (error) {
-    console.log(error);
+const handleToggleCheckAll = e => {
+  if (isCheckedAll.value) {
+    productCheck.value = arrayId.value;
+  } else {
+    productCheck.value = [];
   }
 };
 
-getAllProduct();
-
-const isChecked = ref(false);
-const handleToggleCheckAll = e => {
-  console.log(123);
+const handleCheckbox = e => {
+  if (productCheck.value.length === arrayId.value.length) {
+    isCheckedAll.value = true;
+  } else {
+    isCheckedAll.value = false;
+  }
 };
+
 const showProduct = id => {
   router.push({
     name: 'detailsProduct',
-    params: {},
+    params: { id: id },
   });
 };
+
+//when component mount function is call
+onMounted(() => {
+  //save product list
+  axios.post('/products/save')
+    .then(response => {
+      console.log(response);
+    })
+    .catch(error => {
+      console.log(error);
+    });
+  axios.get('/products')
+    .then(response => {
+      console.log(response);
+      products.value = response;
+      arrayId.value = response.map(element => element.id);
+    })
+    .catch(
+      error => {
+        console.log(error);
+      },
+    );
+});
 </script>
 
 <style scope lang='scss'>
@@ -241,32 +276,52 @@ const showProduct = id => {
       margin-top: 40px;
       display: block;
       overflow-x: auto;
-      .proo-order-table{
+      .pro-order-table{
+        display: block;
+        overflow-x: auto;
         width: 100%;
-        border: 1px solid $border-color;
         border-radius: 5px;
         font-size: 1rem;
-        min-height: 100px;
+        border-collapse: collapse;
         .table-bar{
           width: 100%;
           height: 40px;
+          .status-cover{
+            display: flex;
+            align-items: center;
+            position: relative;
+          }
+          .status-icon{
+            width: 20px;
+            height: 20px;
+            margin-left: 4px;
+            position: absolute;
+            top: calc(50% - 1px);
+            transform: translateY(-50%);
+            left: 45px;
+          }
           .pro-header-item{
             color: rgba($primary-color, 1.5);
             font-style: italic;
             text-align: center;
           }
+          .pro-check-cover{
+      width: 40px;
+      height: 40px;
+    }
         }
         .table-list{
-          cursor: pointer;
+          height: 100px;
           .pro-item{
             padding: 0 12px;
-            text-align: left;
+            text-align: center;
             line-height: 1.5;
             font-size: 0.875rem;
             color: #333;
-            border-top: 1px solid $border-color;
             .refer-list{
+              cursor: pointer;
               padding: 0;
+              justify-content: flex-start;
               display: flex;
               flex-direction: row;
               align-items: center;
@@ -276,10 +331,9 @@ const showProduct = id => {
                 width: 60px;
                 height: 60px;
                 .div-image{
-                background-size: contain;
-                width: 100%;
-                height: 100%;
-                border: 1px solid $border-color;
+                  background-size: cover;
+                  height: 60px;
+                  margin-right: 12px;
             }
             }
               .refer-name{

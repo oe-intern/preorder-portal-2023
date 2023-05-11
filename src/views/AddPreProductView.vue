@@ -1,3 +1,4 @@
+<!-- eslint-disable max-len -->
 <template lang="pug">
 .container
   .add-page
@@ -9,8 +10,8 @@
             span.btn-header-text back to previous page
         h1.text-content Add a new Product
       .btn-function
-        button.btn Discard
-        button.btn.btn-primary.m-s-1 Save
+        button.btn(@click="resetField") Discard
+        button.btn.btn-primary.m-s-1(@click="submit") Save
     .info-variant
       .part
         .part-header
@@ -18,14 +19,25 @@
         .part-body
           p.par-body-text This is pulled from your existing product catalog in Shopify.
           input(
+  v-model="productSearchName"
   type="text"
-  name="productName"
-  placeholder="Search for a product" ).part-body-int
-          .list-suggested-product
-          .product-choice
-            image(src="https://cdn.shopify.com/s/files/1/0751/8044/1914/products/9713303427_2_1_2.jpg?v=1681703237").product-photo
+  placeholder="Search for a product"
+  @focus="showRecommended"
+  @blur="hiddenRecommended"
+  ).part-body-int
+          .list-suggested-product(v-if="isShowRecommended")
+            .product-choice(
+              v-for="productRecommend in productListRecommend"
+              :key="productRecommend.id"
+              @click="choseProduct(productRecommend)"
+            )
+              img(:src="productRecommend.image_src").product-photo
+              .product-body
+                h3.product-text {{ productRecommend.title }}
+          .product-choice(v-if="productChoice.image_src" style="margin-top: 12px;")
+            img(:src="productChoice.image_src").product-photo
             .product-body
-              h3.product-text Denim Light Ripped
+              h3.product-text {{ productChoice.title }}
       .part
         .part-header
           h2.part-text 2. What are your <b>estimated ship dates</b> for this product?
@@ -34,10 +46,9 @@
           .calendar-cover
             DatePicker(
   v-model="selectedDate"
-  allow-range= true
+  allow-range=" true"
   :month="pickerView.month"
   :year="pickerView.year"
-  @change="handleChange"
   @month-change="handleMonthChange"
             )
       .part
@@ -46,30 +57,42 @@
         .part-body
           p.par-body-text Limited quantity to order before the product is out of stock
           ul.list-type-product
-            li.item-type-product
+            li.item-type-product(v-for="variant in variants" :key="variant.id")
               .item-variant
                 span.variant-name 34 / CornflowerBlue
               input(
+v-model="variantStocks"
 type="number"
 step="1"
 min="0"
-value="0").variant-input
+).variant-input
 </template>
 
-<script setup lang="ts">
+<script setup>
 
 import CircleLeftMajor from '@icons/CircleLeftMajor.svg';
 import { DatePicker } from '@ownego/polaris-vue';
-import { ref, reactive } from 'vue';
+import {
+  ref, reactive, onMounted, inject, watch,
+} from 'vue';
 
+const axios = inject('axios');
+const errors =ref({});
+
+//product recommend
+const isShowRecommended = ref(false);
+const productSearchName = ref('');
+const productListRecommend = ref([]);
+const productChoice = ref({});
+//Date
 const today= new Date();
 const dayNow = today.getDate();
 const monthNow = today.getMonth();
 const yearNow = today.getFullYear();
 
 const selectedDate = ref({
-  start: new Date(`${yearNow}/${monthNow}/${dayNow}`),
-  end: new Date(`${yearNow}/${monthNow}/${dayNow + 4}`),
+  start: today,
+  end: new Date('2023/5/14'),
 });
 
 const pickerView = reactive({
@@ -77,14 +100,80 @@ const pickerView = reactive({
   year: yearNow,
 });
 
-const handleChange = (date: any) => {
-  console.log(date);
-};
-
-const handleMonthChange = ({ month , year}) => {
+const handleMonthChange = ({ month, year }) => {
   pickerView.month = month;
   pickerView.year = year;
 };
+
+///end Date
+
+//variant stock
+const variants =ref([]);
+const variantStocks = ref();
+
+const fetchVariants = () => {
+  axios.get(`/products/${productChoice.value.id}`)
+    .then(response => {
+      console.log(response);
+      variants.value = response;
+    })
+    .catch(error => {
+      console.log(error);
+    });
+};
+
+//Products Recommended
+watch(productSearchName, (newValue, oldValue) => {
+  if (newValue === '') {
+    console.log(newValue);
+    productListRecommend.value = {};
+  } else {
+    console.log(newValue);
+    axios.get(`/products/search/${newValue}`)
+      .then(response => {
+        productListRecommend.value = response;
+      })
+      .catch(error => {
+        console.log(error);
+      });
+  }
+});
+
+const showRecommended = () => {
+  isShowRecommended.value = true;
+};
+
+const hiddenRecommended = () => {
+  setTimeout(() => {
+    isShowRecommended.value = false;
+  }, 100);
+};
+
+const choseProduct = product => {
+  productChoice.value = product;
+  isShowRecommended.value =false;
+  fetchVariants();
+};
+
+//submit
+
+const submit = () => {
+  const fields = {};
+
+  fields.id = productChoice.value.id;
+  console.log(selectedDate.value);
+  fields.date_start = selectedDate.value.start;
+  fields.date_end = selectedDate.value.end;
+  fields.variants_stock = variantStocks.value;
+  axios.post('/products/active',fields)
+  .then(response => {
+    console.log(response);
+  })
+  .catch(error => {
+    errors.value = error.response.data;
+  });
+};
+
 </script>
 
 <style scope lang="scss">
@@ -92,6 +181,23 @@ const handleMonthChange = ({ month , year}) => {
 
 .add-page{
   width: 100%;
+}
+.list-suggested-product{
+  border-right: 1px solid $border-color;
+  border-left: 1px solid $border-color;
+  border-bottom: 1px solid $border-color;
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
+  position: absolute;
+  background-color: white;
+  z-index: 10;
+  width: calc( 100% - 48px );
+  left: 50%;
+  transform: translateX(-50%);
+  .product-choice:hover{
+    cursor: pointer;
+    background-color: rgba($primary-color,0.2);
+  }
 }
 
 .header {
@@ -150,6 +256,7 @@ const handleMonthChange = ({ month , year}) => {
       }
     }
     .part-body{
+      position: relative;
       padding: 24px;
       .par-body-text{
         margin-top: 0;
@@ -171,11 +278,11 @@ const handleMonthChange = ({ month , year}) => {
         display: flex;
         -webkit-box-align: center;
         align-items: center;
-        padding: 24px 0;
+        padding: 8px 24px;
         .product-photo{
           height: 60px;
-    border-radius: 5px;
-    object-fit: cover;
+          border-radius: 5px;
+          object-fit: cover;
         }
         .product-text{
           color: $dark-color;

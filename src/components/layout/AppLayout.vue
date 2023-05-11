@@ -1,6 +1,6 @@
 <template lang="pug">
 Header
-.d-flex.under-header
+.d-flex.under-header(style="background-color: white;")
   .content-app
     router-view.content
 </template>

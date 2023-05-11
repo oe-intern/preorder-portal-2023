@@ -30,9 +30,10 @@ const routes = [
         component: SettingView,
       },
       {
-        path: '/product/{id}',
+        path: '/product/:id',
         name: 'detailsProduct',
         component: ProductDetailsView,
+        props: true,
       },
       {
         path: '/add-pre-product',
