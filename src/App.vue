@@ -23,6 +23,7 @@ import createApp from '@shopify/app-bridge';
 import { getSessionToken } from '@shopify/app-bridge/utilities';
 
 const scaffoldingEmbeddedData = inject('scaffoldingEmbeddedData');
+const axios = inject('axios');
 
 const app = createApp({
   apiKey: scaffoldingEmbeddedData.apiKey,

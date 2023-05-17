@@ -4,7 +4,7 @@
     .title-header
       span Pre-orders
     .content-header(:class="{'no-blur' : isChecked}")
-      button.btn-fulfill  Ready to FulFill
+      button.btn-fulfill(@click="fulFill")  Ready to FulFill
   .pre-order-task-bar
     .pre-order-search
       label(for="searchProduct").search-icon
@@ -12,9 +12,9 @@
       .search-input-cover
         input(
 id="searchProduct",
+v-model="searchPreorder",
 type="text",
-name="searchProduct",
-placeholder="Filter Pre-orders").search-input
+placeholder="Search preorder by customerName").search-input
     .pre-order-sort
       .sort-by
         label( for="sort-by-list" ).title-sort-by Sort by
@@ -23,12 +23,6 @@ placeholder="Filter Pre-orders").search-input
           option(value="oldest").sort-by-item Oldest first
           option(value="the most expensive").sort-by-item The most expensive first
           option(value="cheapest").sort-by-item Cheapest first
-      .sort-by
-        label( for="status" ).title-sort-by Status is
-        select(id="status" name="statusSort" ).sort-by-list
-          option(value="all").sort-by-item ALL
-          option(value="onPreOrder").sort-by-item On Pre-Order
-          option(value="readyToFullfil").sort-by-item Ready to Fullfil
   .pre-order-list
     table.pre-order-table.overflow-column.separate-border
       thead
@@ -36,74 +30,131 @@ placeholder="Filter Pre-orders").search-input
           th(colspan="1").pre-check.pre-header-item
             label( for="all").pre-check-cover
               input(
-type="checkbox",
-name="checkList",
-value="checkAllList",
-@change="handleToggleCheckAll").pre-check-box#pre-check-all
+  v-model="isCheckedAll",
+  type="checkbox",
+  @change="handleToggleCheckAll").pre-check-box#pre-check-all
           th(colspan="1").pre-reference.pre-header-item Reference#
-          th(colspan="1").pre-shopify-id.pre-header-item Shopify#
           th(colspan="1").pre-customer.pre-header-item Customer
           th(colspan="1").pre-date.pre-header-item Date
-          th(colspan="1").pre-status.pre-header-item
-            div.status-cover
-              span Status
-              InfoMinor.status-icon
           th(colspan="1").pre-quantity.pre-header-item Quantity
           th(colspan="1").pre-total.pre-header-item Total
       tbody
-        tr.table-list
+        tr.table-list(v-for="preOrder in preOrders" :key="preOrder.id")
           td(colspan="1").pre-check.pre-item
             label( for="all").pre-check-box
               input(
-type="checkbox",
-name="checkList",
-value="1",
-@change="handleToggleCheck").pre-check-box
+  :id="preOrder.id",
+  :ref="checkItem",
+  v-model="preOrderCheck",
+  :value="preOrder.id",
+  type="checkbox",
+  @change="handleCheckbox",).pre-check-box
           td.product-refer.pre-item
             ul.refer-list
               li.refer-image-cover
-                .div-image
+                img( :src="preOrder.variant.image_src").div-image
               li.refer-name
-                span.product-name Sony WF-1000XM4
-                span.refer-type Pro
-                span.refer-price &eth;349
-          td.product-shopify-id.pre-item
-            router-link(:to="{name:'pre-order',params:{}}") 123123
+                span.product-name {{ preOrder.variant.name }}
+                span.refer-type {{ preOrder.variant.title_var }}
+                span.refer-price &eth;{{ preOrder.variant.price }}
           td.product-customer.pre-item
             router-link(to="#")
               ul
-                li.customer-name Nguyen Tien Dat
-                li.customer-email dat2552002@gmail.com
-                li.customer-location Thi tran Phuc Tho, Phuc Tho, Ha Noi, Viet Nam
-          td.product-date.pre-item 19 Apr 2023
-          td.product-status.pre-item open
-          td.product-quantity.pre-item 2
-          td.product-total.pre-item &eth;798
+                li.customer-name {{ preOrder.customer.name }}
+                li.customer-email {{ preOrder.customer.email || preOder.customer.phone }}
+                li.customer-location {{ preOrder.customer.address }}
+          td.product-date.pre-item {{ preOrder.create_at }}
+          td.product-quantity.pre-item {{ preOrder.quantity }}
+          td.product-total.pre-item &eth;{{ preOrder.variant.price * preOrder.quantity }}
 </template>
 
 <script setup>
 import InfoMinor from '@icons/InfoMinor.svg';
 import SearchMajor from '@icons/SearchMajor.svg';
+import { useRouter } from 'vue-router';
 import {
-  onMounted, ref, inject,
+  onMounted, ref, inject, watch,
 } from 'vue';
 
-const preOrders = ref([]);
 const axios = inject('axios');
+const router = useRouter();
+const preOrderCheck = ref([]);
+const arrayId = ref([]);
+const isCheckedAll = ref(false);
+const preOrders = ref([]);
 const isChecked = ref(false);
+const searchPreorder = ref('');
+
+// axios.post('/products')
+//   .then(response => {
+//     console.log(response);
+//   })
+//   .catch(error => {
+//     console.log(error);
+//   });
+
 const handleToggleCheckAll = e => {
-  console.log(123);
+  if (isCheckedAll.value) {
+    preOrderCheck.value = arrayId.value;
+    isChecked.value = true;
+  } else {
+    preOrderCheck.value = [];
+    isChecked.value = false;
+  }
 };
 
+const handleCheckbox = e => {
+  if (preOrderCheck.value.length === arrayId.value.length) {
+    isCheckedAll.value = true;
+    isChecked.value =true;
+  } else if (preOrderCheck.value.length >0) {
+    isChecked.value =true;
+    isCheckedAll.value = false;
+  } else {
+    isChecked.value =false;
+    isCheckedAll.value = false;
+  }
+};
+
+watch(searchPreorder, (newValue, oldValue) => {
+  if (newValue === '') {
+    axios.get('/preorders')
+      .then(response => {
+        preOrders.value = response;
+        arrayId.value = response.map(element => element.id);
+      })
+      .catch(
+        error => {
+          console.log(error);
+        },
+      );
+  } else {
+    axios.get(`/preorders/${newValue}`)
+      .then(response => {
+        preOrders.value = response;
+        arrayId.value = response.map(element => element.id);
+      })
+      .catch(error => {
+        console.log(error);
+      });
+  }
+});
+
 onMounted(() => {
-  axios.get('/pre-order')
+  axios.get('/preorders')
     .then(response => {
       preOrders.value = response;
+      console.log(response);
+      arrayId.value = response.map(element => element.id);
     })
     .catch(error => {
       console.log(error);
     });
 });
+
+const fulFill= () => {
+  console.log(123);
+};
 </script>
 
 <style scope lang='scss'>
@@ -160,7 +211,9 @@ onMounted(() => {
         width: 20px;
         height: 20px;
         margin: 0 12px;
+        display: block;
         .icon-search{
+          display: block;
           width: 100%;
           height: 100%;
           object-fit: cover;
@@ -264,13 +317,10 @@ onMounted(() => {
             min-width: 200px;
             .refer-image-cover{
                 display: block;
-                width: 60px;
-                height: 60px;
                 .div-image{
-                background-size: contain;
-                width: 100%;
-                height: 100%;
-                border: 1px solid $border-color;
+                  height: 60px;
+                  border: 1px solid $border-color;
+                  object-fit: cover;
             }
             }
             .refer-name{

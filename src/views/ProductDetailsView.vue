@@ -10,7 +10,7 @@
     .btn-function
       button.btn.btn-danger(@click="deleteProduct") Delete
       button.btn.btn-primary.m-s-1(@click="updateProduct") Update
-      button.btn.btn-primary(@click="fullfilProduct") Ready to Fulfill
+      button.btn.btn-normal(@click="fullfilProduct") Ready to Fulfill
   .body-product
     .info-details-product
       .product-info
@@ -19,10 +19,10 @@
           .edit-header-content
             span(:class="productDetails.status ===1 ? 'active' : 'inactive' ").edit-status {{productDetails.status ===1 ? 'active' : 'inactive'}}
         .product-summary
-          .summary-photo(:style="{backgroundImage: 'url('+productDetails.image_src+')'} ")
+          img(:src="productDetails.image_src" :alt="productDetails.title").summary-photo
           .summary-content
             h1.summary-name-product {{ productDetails.title }}
-            .summary-ship-date Apr 20 – May 4, 2023
+            .summary-ship-date {{ productDetails.date_start?DateStart:'unset' }} – {{ productDetails.date_end?DateEnd:'unset' }}
             .summary-create-at Created on {{ DateCreated }}
         .variant-info-cover
           table.variant-table.separate-border
@@ -35,15 +35,15 @@
             tbody
               tr.total-item
                 td.units Totals
-                td.units.units-buy 1266
-                td.units.units-sold 0
-                td.units.units-cancel 0
+                td.units.units-buy {{ total.stock }}
+                td.units.units-sold {{ total.preorder }}
+                td.units.units-cancel {{ total.sold }}
               tr(v-for="variant in variants" :key="variant.id").variant-item
                 td.units.units-name
-                  span.variant-name {{ variant.title }}
+                  span.variant-name {{ variant.title_var }}
                   span.variant-sku {{ variant.sku }}
                 td.units.units-buy {{ variant.inventory }}
-                td.units.units-sold {{ variant.preOrder }}
+                td.units.units-sold {{ variant.preorder }}
                 td.units.units-cancel {{ variant.sold }}
       .product-edit
         .product-stock
@@ -54,15 +54,17 @@
                 th.stock-column Variant
                 th.stock-column Value
             tbody
-              tr(v-for="(variant) in variants" :key="variant.id")
+              tr(v-for="(variant,index) in variants" :key="variant.id")
                 td.units.units-name
                   span.variant-name {{ variant.title_var }}
                   span.variant-sku {{ variant.sku }}
                 td
                   input(
+  v-model="variantsStock[index].stock"
   type="number"
   step="1"
-  min="0").item-stock-input
+  min="0"
+  ).item-stock-input
         .product-ship-date
           h1.text-edit Edit Shipping Date
           .calendar-cover
@@ -71,7 +73,6 @@
     allow-range="true"
     :month="pickerView.month"
     :year="pickerView.year"
-    @change="handleChange"
     @month-change="handleMonthChange"
               )
 </template>
@@ -82,29 +83,39 @@ import {
   ref, reactive, inject, onMounted, defineProps,
 } from 'vue';
 
-//
+///
 const axios = inject('axios');
 
 const props = defineProps(['id']);
+
+console.log(props);
 
 const productDetails = ref({});
 
 const variantsStock = ref([]);
 
-const fields = ref({});
-
 const variants = ref({});
 
-const DateCreated = ref('');
+const errors =ref({});
+
+const total = ref({
+  inventory: 0,
+  preorder: 0,
+  sold: 0,
+});
 //Date
+
+const DateStart = ref('');
+const DateEnd = ref('');
+const DateCreated = ref('');
 const today= new Date();
 const dayNow = today.getDate();
 const monthNow = today.getMonth();
 const yearNow = today.getFullYear();
 
 const selectedDate = ref({
-  start: today,
-  end: new Date('2023/5/14'),
+  start: productDetails.value.date_start || today,
+  end: productDetails.value.date_end|| today,
 });
 
 const pickerView = reactive({
@@ -112,43 +123,75 @@ const pickerView = reactive({
   year: yearNow,
 });
 
-const handleChange = date => {
-  console.log(date);
-  console.log(selectedDate.value);
-};
-
 const handleMonthChange = ({ month, year }) => {
   pickerView.month = month;
   pickerView.year = year;
 };
 
-onMounted(() => {
-  console.log(props.id);
-  axios.get(`/products/${props.id}`)
+// functions call API products
+const deleteProduct= () => {
+  axios.put(`/products/deactivate/${props.id}`)
+    .then(
+      response => {
+        console.log(response);
+      })
+    .catch(
+      error => {
+        console.log(error);
+      },
+    );
+};
+
+const updateProduct= () => {
+  const fields = {};
+
+  fields.date_start = selectedDate.value.start;
+  fields.date_end = selectedDate.value.end;
+  fields.variants_stock = variantsStock.value;
+  console.log(fields);
+  axios.put(`/products/edit/${props.id}`, fields)
     .then(response => {
       console.log(response);
-      variants.value = response;
     })
-    // .then(() => {
-    //   variants.value.forEach((element, index) => {
-    //     variantsStock[index].id = element.id;
-    //   });
-    // })
     .catch(error => {
       console.log(error);
     });
+};
 
-  axios.get('/products')
+onMounted(() => {
+  axios.get(`/products/variants/${props.id}`)
     .then(response => {
-      productDetails.value = response.find(element => element.id.toString() === props.id);
-      console.log(productDetails.value);
+      variants.value = response.variants;
+      variantsStock.value = response.variants.map(
+        item => {
+          total.value.inventory += item.inventory;
+          total.value.preorder+= item.preorder;
+          total.value.sold += item.sold;
+
+          return {
+            id: item.id,
+            stock: item.inventory,
+          };
+        },
+      );
+    })
+    .catch(error => {
+      console.log(error);
+    });
+  axios.get(`/products/search/id/${props.id}`)
+    .then(response => {
+      productDetails.value = response;
       const dateObject = new Date(productDetails.value.created_at);
+      const startDateObject = new Date(productDetails.value.date_start);
+      const endDateObject = new Date(productDetails.value.date_end);
       const options = {
         day: 'numeric',
         month: 'short',
         year: 'numeric',
       };
 
+      DateStart.value = startDateObject.toLocaleDateString('en-US', options);
+      DateEnd.value = endDateObject.toLocaleDateString('en-US', options);
       DateCreated.value = dateObject.toLocaleDateString('en-US', options);
     })
     .catch(
@@ -162,6 +205,19 @@ onMounted(() => {
 
 <style scope lang="scss">
 @import '@/scss/variables.scss';
+.summary-name-product{
+  font-weight: 600;
+  line-height: 1.5;
+}
+.summary-ship-date{
+  font-size: 0.875rem;
+  line-height: 2;
+}
+
+.summary-create-at{
+  line-height: 1.5;
+  font-size: 1rem;
+}
 .btn-function{
   display: inline-block;
   padding-top:24px;
@@ -201,13 +257,11 @@ onMounted(() => {
       flex-direction: row;
       align-items: center;
       .summary-photo{
-        display: block;
         width: 80px;
-        height: 80px;
-        background-size: cover;
         margin-left: 24px;
         margin-right:24px;
         border-radius: 5px;
+        object-fit: cover;
       }
     }
     .variant-info-cover{
@@ -223,7 +277,7 @@ onMounted(() => {
         display: flex;
         flex-direction: column;
         .variant-name{
-          font-size: 1rem;
+          font-size: 0.875rem;
           color: #000;
         }
         .variant-sku{
@@ -247,8 +301,11 @@ onMounted(() => {
 
     .item-stock-input{
       border-radius: 5px;
-    border: 1px solid rgb(216, 216, 216);
-    padding: 8px;
+      border: 1px solid rgb(216, 216, 216);
+      padding: 16px;
+      font-size: 16px;
+      text-align: right;
+      width: 100%;
     &:focus{
             outline-color: rgb(77, 144, 254) ;
           }
@@ -268,7 +325,7 @@ onMounted(() => {
         display: flex;
         flex-direction: column;
         .variant-name{
-          font-size: 1rem;
+          font-size: 0.875rem;
           color: #000;
         }
         .variant-sku{

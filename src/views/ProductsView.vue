@@ -1,10 +1,11 @@
+<!-- eslint-disable max-len -->
 <template lang="pug">
 .pro-order-page.col.container
   .header-pro-order
     .title-header
       span Product pro-order List
     .content-header
-      button.btn-fulfill(:class="{'no-blur' : isChecked}") Ready to FulFill
+      button.btn-fulfill(:class="{'no-blur' : isChecked}" @click="isChecked? fulFill() : isChecked=false" ) Ready to FulFill
       button(@click="handelAddNewProduct").btn-fulfill.no-blur Add new product
   .pro-order-task-bar
     .pro-order-search
@@ -13,22 +14,30 @@
       .search-input-cover
         input(
   id="searchProduct",
+  v-model="searchProduct"
   type="text",
-  name="searchProduct",
   placeholder="Filter pro-orders").search-input
     .pro-order-sort
       .sort-by
         label( for="sort-by-list" ).title-sort-by Sort by
-        select(id="sort-by-list" name="typeSort" ).sort-by-list
-          option(value="newest").sort-by-item Newest first
-          option(value="oldest").sort-by-item Oldest first
-          option(value="the most expensive").sort-by-item The most expensive first
-          option(value="cheapest").sort-by-item Cheapest first
+        select.sort-by-list(
+          id="sort-by-list"
+          v-model="searchType"
+          name="typeSort" )
+          option.sort-by-item(
+            value=""
+            hidden) Chose the type
+          option(value="newest").sort-by-item Newest
+          option(value="oldest").sort-by-item Oldest
+          option(value="abc").sort-by-item Alphabet
+          option(value="cba").sort-by-item Reversed alphabet
+          option(value="the most expensive").sort-by-item The most expensive
+          option(value="cheapest").sort-by-item Cheapest
       .sort-by
         label( for="status" ).title-sort-by Status is
-        select(id="status" name="statusSort" ).sort-by-list
+        select(id="status" v-model="searchStatus" ).sort-by-list
           option(value="all").sort-by-item ALL
-          option(value="onproOrder").sort-by-item On pro-Order
+          option(value="preOrder").sort-by-item Pre-Order
           option(value="readyToFullfil").sort-by-item Ready to Fullfil
   .pro-order-list
     table.pro-order-table.overflow-column.separate-border
@@ -45,11 +54,12 @@
             div.status-cover
               span Status
               InfoMinor.status-icon
+          th(colspan="1").pro-vendor.pro-header-item Vendor
+          th(colspan="1").pro-header-item.pro-price Price
           th(colspan="1").pro-customer.pro-header-item Date Start
           th(colspan="1").pro-customer.pro-header-item Date End
-          th(colspan="1").pro-vendor.pro-header-item Vendor
-          th(colspan="1").pro-date.pro-header-item Shell Through
-          th(colspan="1").pro-color.pro-header-item Ready to fulfill
+          th(colspan="1").pro-date.pro-header-item Preorder Number
+          th(colspan="1").pro-color.pro-header-item Sell Number
       tbody
         tr(
 v-for="(product ,index) in products"
@@ -69,34 +79,43 @@ v-for="(product ,index) in products"
             div(style="margin-left: 24px;")
               ul.refer-list(@click.prevent="showProduct(product.id)")
                 li.refer-image-cover
-                  .div-image(:style="{backgroundImage: 'url('+product.image_src+')'} ")
+                  img(:src="product.image_src").product-photo
                 li.refer-name
                   span.product-name {{product.title}}
           td.pro-item
             span(:class="product.status=== 1 ? 'active' : 'inactive' ") {{ product.status=== 1 ? 'active' : 'inactive' }}
-          td.product-date.pro-item
-            span.date-from {{ product.date_start ? product.date_start :'unset' }}
-          td.product-date.pro-item
-            span.date-to {{ product.date_end ? product.date_end : 'unset' }}
           td.product-vendor.pro-item {{ product.vendor }}
+          td.pro-item.product-price {{ product.price }}$
+          td.product-date.pro-item
+            span.date-from {{ product.date_start ? product.date_start :'' }}
+          td.product-date.pro-item
+            span.date-to {{ product.date_end ? product.date_end : '' }}
           td.product-shell.pro-item
-            .shell-header
-              span.shell-title 0.00%
-              span.shell-text (0/1266  units)
-            progress(max="100", value="20" ).shell-progress
-          td.product-fulfill.pro-item 0.00%(0/0 units)
+            .shell-header(v-if="!product.status===1")
+              span.shell-title {{ variantsArray[index].reduce((total,object) => total + object.preorder,0) }} %
+              span.shell-text ({{ variantsArray[index].reduce((total,object) => total + object.sold, 0) }} / {{ variantsArray[index].reduce((total,object) => total + object.stock,0) }}  units)
+            progress(
+              v-if="!product.status===1"
+              max="100"
+              :value="variantsArray[index].reduce((total,object) => total + object.sold, 0) / variantsArray[index].reduce((total,object) => total + object.stock,0) * 100" ).shell-progress
+          td.product-fulfill.pro-item   {{ product.status===1? `${variantsArray[index].reduce((total,object) => total + object.sold, 0) / variantsArray[index].reduce((total,object) => total + object.stock,0) * 100 }%( ${variantsArray[index].reduce((total,object) => total + object.sold, 0)} / ${ variantsArray[index].reduce((total,object) => total + object.stock,0)}  units)`: "" }}
 </template>
 
 <script setup>
+
 import { useRouter } from 'vue-router';
 import InfoMinor from '@icons/InfoMinor.svg';
 import SearchMajor from '@icons/SearchMajor.svg';
 import {
-  inject, ref, onMounted,
+  inject, ref, onMounted, watch,
 } from 'vue';
+import { elements } from 'chart.js';
 
 const productCheck = ref([]);
 const router = useRouter();
+
+const searchStatus = ref('all');
+const searchType = ref('');
 
 const isCheckedAll = ref(false);
 
@@ -106,7 +125,21 @@ const products = ref(null);
 
 const arrayId = ref([]);
 
+const variants = ref([]);
+
+const variantsArray = ref([]);
+
+const searchProduct = ref('');
+const isChecked = ref(false);
+
 //function always run
+// axios.post('/products')
+//   .then(response => {
+//     console.log(response);
+//   })
+//   .catch(error => {
+//     console.log(error);
+//   });
 
 //function run when call
 const handelAddNewProduct = () => {
@@ -119,16 +152,23 @@ const handelAddNewProduct = () => {
 const handleToggleCheckAll = e => {
   if (isCheckedAll.value) {
     productCheck.value = arrayId.value;
+    isChecked.value = true;
   } else {
     productCheck.value = [];
+    isChecked.value = false;
   }
 };
 
 const handleCheckbox = e => {
   if (productCheck.value.length === arrayId.value.length) {
     isCheckedAll.value = true;
+    isChecked.value = true;
+  } else if (productCheck.value.length >0) {
+    isChecked.value = true;
+    isCheckedAll.value = false;
   } else {
     isCheckedAll.value = false;
+    isChecked.value = false;
   }
 };
 
@@ -139,19 +179,179 @@ const showProduct = id => {
   });
 };
 
+watch(searchStatus, (newValue, oldValue) => {
+  switch (newValue) {
+    case 'all':
+      axios.get('/products')
+        .then(response => {
+          products.value = response;
+          arrayId.value = response.map(element => element.id);
+        })
+        .catch(
+          error => {
+            console.log(error);
+          },
+        );
+      break;
+    case 'preOrder':
+      products.value = products.value.filter(elements => elements.status===1);
+      arrayId.value = products.value.map(item => item.id);
+      break;
+    case 'readyToFullfil':
+      axios.get('/products/ready-to-fulfill')
+        .then(response => {
+          products.value = response;
+          arrayId.value = response.map(element => element.id);
+        })
+        .catch(
+          error => {
+            console.log(error);
+          },
+        );
+      break;
+    default:
+      break;
+  }
+});
+
+watch(searchType, (newValue, oldValue) => {
+  switch (newValue) {
+    case 'newest':
+      products.value.sort((a, b) => {
+        const titleA= a.date_start;
+        const titleB= b.date_start;
+
+        if (titleA > titleB) {
+          return 1;
+        }
+
+        if (titleA < titleB) {
+          return -1;
+        }
+
+        return 0;
+      });
+      arrayId.value = products.value.map(item => item.id);
+      break;
+    case 'oldest':
+      products.value.sort((a, b) => {
+        const titleA= a.date_end;
+        const titleB= b.date_end;
+
+        if (titleA > titleB) {
+          return -1;
+        }
+
+        if (titleA < titleB) {
+          return 1;
+        }
+
+        return 0;
+      });
+      arrayId.value = products.value.map(item => item.id);
+      break;
+    case 'the most expensive':
+      products.value.sort((a, b) => {
+        const titleA= parseFloat(a.price);
+        const titleB= parseFloat(b.price);
+
+        if (titleA > titleB) {
+          return -1;
+        }
+
+        if (titleA < titleB) {
+          return 1;
+        }
+
+        return 0;
+      });
+      arrayId.value = products.value.map(item => item.id);
+      break;
+    case 'cheapest':
+      products.value.sort((a, b) => {
+        const titleA= parseFloat(a.price);
+        const titleB= parseFloat(b.price);
+
+        if (titleA > titleB) {
+          return 1;
+        }
+
+        if (titleA < titleB) {
+          return -1;
+        }
+
+        return 0;
+      });
+      arrayId.value = products.value.map(item => item.id);
+      break;
+    case 'cba':
+      products.value.sort((a, b) => {
+        const titleA= a.title.toUpperCase();
+        const titleB= b.title.toUpperCase();
+
+        if (titleA > titleB) {
+          return -1;
+        }
+
+        if (titleA < titleB) {
+          return 1;
+        }
+
+        return 0;
+      });
+      arrayId.value = products.value.map(item => item.id);
+      break;
+    case 'abc':
+      products.value.sort((a, b) => {
+        const titleA= a.title.toUpperCase();
+        const titleB= b.title.toUpperCase();
+
+        if (titleA > titleB) {
+          return 1;
+        }
+
+        if (titleA < titleB) {
+          return -1;
+        }
+
+        return 0;
+      });
+      arrayId.value = products.value.map(item => item.id);
+      break;
+    default:
+      break;
+  }
+});
+
+watch(searchProduct, (newValue, oldValue) => {
+  if (newValue === '') {
+    axios.get('/products')
+      .then(response => {
+        products.value = response;
+        arrayId.value = response.map(element => element.id);
+      })
+      .catch(
+        error => {
+          console.log(error);
+        },
+      );
+  } else {
+    axios.get(`/products/search/name/${newValue}`)
+      .then(response => {
+        products.value = response;
+        arrayId.value = response.map(element => element.id);
+      })
+      .catch(error => {
+        console.log(error);
+      });
+  }
+});
+
 //when component mount function is call
-onMounted(() => {
-  //save product list
-  axios.post('/products/save')
+onMounted(async () => {
+  ///get all products
+  await axios.get('/products')
     .then(response => {
-      console.log(response);
-    })
-    .catch(error => {
-      console.log(error);
-    });
-  axios.get('/products')
-    .then(response => {
-      console.log(response);
       products.value = response;
       arrayId.value = response.map(element => element.id);
     })
@@ -160,7 +360,30 @@ onMounted(() => {
         console.log(error);
       },
     );
+  // solve stock, preorder and sold
+  // variantsArray.value = await Promise.all(
+  //   products.value.map(async (element, index) => {
+  //     try {
+  //       const response = await axios.get(`/products/variants/${element.id}`);
+
+  //       products.value[index].price = response.variants[0].price;
+
+  //       return response.variants;
+  //     } catch (error) {
+  //       console.log(error);
+
+  //       return [];
+  //     }
+  //   }),
+  // );
+
+  // console.log(products.value);
 });
+
+const fulFill = () => {
+  console.log(productCheck.value);
+};
+
 </script>
 
 <style scope lang='scss'>
@@ -194,6 +417,7 @@ onMounted(() => {
           border: 1px solid $border-color;
           padding: 8px 12px;
           opacity: 0.5;
+          margin-right: 16px;
         }
 
       }
@@ -275,10 +499,12 @@ onMounted(() => {
       width: 100%;
       margin-top: 40px;
       display: block;
-      overflow-x: auto;
       .pro-order-table{
         display: block;
         overflow-x: auto;
+        scroll-padding-bottom: 100vh; /* Chiều cao của màn hình */
+        scroll-snap-type: x mandatory;
+        scroll-snap-align: start;
         width: 100%;
         border-radius: 5px;
         font-size: 1rem;
@@ -328,12 +554,9 @@ onMounted(() => {
               min-width: 200px;
               .refer-image-cover{
                 display: block;
-                width: 60px;
-                height: 60px;
-                .div-image{
-                  background-size: cover;
-                  height: 60px;
-                  margin-right: 12px;
+                .product-photo{
+                  height: 70px;
+                  object-fit: cover;
             }
             }
               .refer-name{

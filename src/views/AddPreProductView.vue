@@ -2,6 +2,9 @@
 <template lang="pug">
 .container
   .add-page
+    //- success message
+    .success-div(v-if="success.isShow")
+      h1.success-title {{ success.title }}
     .header
       .header-text
         router-link(:to="{name:'products'}").link-back
@@ -18,22 +21,24 @@
           h2.part-text 1. Which <b>product</b> do you want to take pre-orders for?
         .part-body
           p.par-body-text This is pulled from your existing product catalog in Shopify.
-          input(
-  v-model="productSearchName"
-  type="text"
-  placeholder="Search for a product"
-  @focus="showRecommended"
-  @blur="hiddenRecommended"
-  ).part-body-int
-          .list-suggested-product(v-if="isShowRecommended")
-            .product-choice(
-              v-for="productRecommend in productListRecommend"
-              :key="productRecommend.id"
-              @click="choseProduct(productRecommend)"
-            )
-              img(:src="productRecommend.image_src").product-photo
-              .product-body
-                h3.product-text {{ productRecommend.title }}
+          .input-div
+            input.part-body-int(
+    v-model="productSearchName"
+    type="text"
+    placeholder="Search for a product"
+    @focus="showRecommended"
+    @blur="hiddenRecommended"
+    )
+            .list-suggested-product(v-if="isShowRecommended")
+              .product-choice(
+                v-for="productRecommend in productListRecommend"
+                :key="productRecommend.id"
+                @click="choseProduct(productRecommend)"
+                @mousedown="disableBlur = true"
+              )
+                img(:src="productRecommend.image_src").product-photo
+                .product-body
+                  h3.product-text {{ productRecommend.title }}
           .product-choice(v-if="productChoice.image_src" style="margin-top: 12px;")
             img(:src="productChoice.image_src").product-photo
             .product-body
@@ -57,11 +62,11 @@
         .part-body
           p.par-body-text Limited quantity to order before the product is out of stock
           ul.list-type-product
-            li.item-type-product(v-for="variant in variants" :key="variant.id")
+            li.item-type-product(v-for="(variant,index) in variants" :key="variant.id")
               .item-variant
-                span.variant-name 34 / CornflowerBlue
+                span.variant-name {{ variant.title_var }}
               input(
-v-model="variantStocks"
+v-model="variantsStock[index].stock"
 type="number"
 step="1"
 min="0"
@@ -78,12 +83,19 @@ import {
 
 const axios = inject('axios');
 const errors =ref({});
+const success = ref({ isShow: false });
+const disableBlur = ref(false);
 
 //product recommend
 const isShowRecommended = ref(false);
 const productSearchName = ref('');
 const productListRecommend = ref([]);
 const productChoice = ref({});
+
+//variant stock
+const variants =ref([]);
+const variantsStock = ref([]);
+
 //Date
 const today= new Date();
 const dayNow = today.getDate();
@@ -91,13 +103,13 @@ const monthNow = today.getMonth();
 const yearNow = today.getFullYear();
 
 const selectedDate = ref({
-  start: today,
-  end: new Date('2023/5/14'),
+  start: productChoice.value.date_start|| today,
+  end: productChoice.value.date_end || today,
 });
 
 const pickerView = reactive({
-  month: monthNow,
-  year: yearNow,
+  month: selectedDate.value.start.getMonth(),
+  year: selectedDate.value.end.getFullYear(),
 });
 
 const handleMonthChange = ({ month, year }) => {
@@ -107,29 +119,13 @@ const handleMonthChange = ({ month, year }) => {
 
 ///end Date
 
-//variant stock
-const variants =ref([]);
-const variantStocks = ref();
-
-const fetchVariants = () => {
-  axios.get(`/products/${productChoice.value.id}`)
-    .then(response => {
-      console.log(response);
-      variants.value = response;
-    })
-    .catch(error => {
-      console.log(error);
-    });
-};
-
 //Products Recommended
 watch(productSearchName, (newValue, oldValue) => {
   if (newValue === '') {
-    console.log(newValue);
     productListRecommend.value = {};
   } else {
     console.log(newValue);
-    axios.get(`/products/search/${newValue}`)
+    axios.get(`/products/search/name/${newValue}`)
       .then(response => {
         productListRecommend.value = response;
       })
@@ -144,30 +140,70 @@ const showRecommended = () => {
 };
 
 const hiddenRecommended = () => {
-  setTimeout(() => {
+  if (!disableBlur.value) {
     isShowRecommended.value = false;
-  }, 100);
+  }
 };
 
-const choseProduct = product => {
-  productChoice.value = product;
-  isShowRecommended.value =false;
-  fetchVariants();
+//reset fields
+const resetField = () => {
+  productSearchName.value = '';
+  productChoice.value = {};
+  selectedDate.value = {
+    start: productChoice.value.date_start || today,
+    end: productChoice.value.date_end || today,
+  };
+  variants.value = [];
+  variantsStock.value = [];
 };
+
+//chose product
+const choseProduct = e => {
+  isShowRecommended.value = true;
+  console.log(e);
+  productChoice.value = e;
+};
+
+watch(
+  () => productChoice.value?.id,
+  (newValue, oldValue) => {
+    axios.get(`/products/variants/${newValue}`)
+      .then(response => {
+        variants.value = response.variants;
+        console.log(response);
+        variantsStock.value = response.variants.map(item => {
+          return {
+            id: item.id,
+            stock: item.inventory,
+          };
+        });
+      })
+      .then(() => {
+        isShowRecommended.value = false;
+        disableBlur.value = false;
+      })
+      .catch(error => {
+        disableBlur.value = false;
+        isShowRecommended.value = false;
+        console.log(error);
+      });
+  });
 
 //submit
 
 const submit = () => {
   const fields = {};
 
-  fields.id = productChoice.value.id;
-  console.log(selectedDate.value);
   fields.date_start = selectedDate.value.start;
   fields.date_end = selectedDate.value.end;
-  fields.variants_stock = variantStocks.value;//mot mang cac object voi key la id cua variant va value la inventory cua no
-  axios.post('/products/active', fields)
+  fields.variants_stock = variantsStock.value;//mot mang cac object voi key la id cua variant va value la inventory cua no
+  console.log(fields);
+  axios.post(`/products/active/${productChoice.value.id}`, fields)
     .then(response => {
-      console.log(response);
+      success.value.isShow = true;
+      setInterval(() => {
+        success.value.isShow = false;
+      }, 2500);
     })
     .catch(error => {
       errors.value = error.response.data.errors;
@@ -191,6 +227,8 @@ const submit = () => {
   position: absolute;
   background-color: white;
   z-index: 10;
+  max-height: 50vh;
+  overflow-y: auto;
   width: calc( 100% - 48px );
   left: 50%;
   transform: translateX(-50%);
@@ -292,6 +330,7 @@ const submit = () => {
       }
       .list-type-product{
         .item-type-product{
+          margin: 12px 0;
           display: flex;
     -webkit-box-align: center;
     align-items: center;

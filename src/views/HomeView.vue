@@ -46,62 +46,73 @@
       canvas( ref="chart", style="width: 100%;height: 400px;" ).chart-home-analytics
     .home-summary.col.row
       .save-th-cover.col-12.col-xl-6
-        .sale-th
+        .sale-th(v-if="bestSellerProducts[0]")
           .sale-th-title
             span Top Pre-order product Seller
           ul.sale-list
-            li.sale-item-product
+            li.sale-item-product(v-for="bestSellerProduct in bestSellerProducts" :key="bestSellerProduct.id")
               .sale-cover-photo
-                image(
-  src="https://cdn.shopify.com/s/files/1/0070/7032/files/image5_4578a9e6-2eff-4a5a-8d8c-9292252ec848.jpg?v=1620247043",
-                  alt="Product").image-sale
+                img(
+  :src="bestSellerProduct.image_src",
+                  :alt="bestSellerProduct.title").image-sale
               .content-sale
                 .content-sale-text
-                  span.name-product-sale Camera
-                  .sale-precess-text
-                    span.number-sale 0.00%
-                    span.units-sale (0/2710 units)
-                .sale-precess-bar
-                  progress( max="100" value="50").progress-bar
-            li.sale-item-product
-              .sale-cover-photo
-                image(
-  src="https://cdn.shopify.com/s/files/1/0070/7032/files/image5_4578a9e6-2eff-4a5a-8d8c-9292252ec848.jpg?v=1620247043",
-                  alt="Product").image-sale
-              .content-sale
-                .content-sale-text
-                  span.name-product-sale Camera
+                  span.name-product-sale {{ bestSellerProduct.title }}
                   .sale-precess-text
                     span.number-sale 0.00%
                     span.units-sale (0/2710 units)
                 .sale-precess-bar
                   progress( max="100" value="50").progress-bar
       .sale-th-cover.col-12.col-xl-6
-        .sale-th
+        .sale-th(v-if="worstSellerProducts[0]")
           .sale-th-title
             span Low Pre-order product Seller
           ul.sale-list
             li.sale-item-product
+              h1(v-if="!bestSellerProducts[0]" style="width: 100%;text-align: center;font-size: 2rem;") No Found Product
+            li.sale-item-product(v-for="worstSellerProduct in worstSellerProducts" :key="worstSellerProduct.id")
               .sale-cover-photo
-                image(
-  src="https://cdn.shopify.com/s/files/1/0070/7032/files/image5_4578a9e6-2eff-4a5a-8d8c-9292252ec848.jpg?v=1620247043",
-                  alt="Product").image-sale
+                img(
+  :src="worstSellerProduct.image_src",
+                  :alt="worstSellerProduct.title").image-sale
               .content-sale
                 .content-sale-text
-                  span.name-product-sale Camera
+                  span.name-product-sale {{ worstSellerProduct.title }}
                   .sale-precess-text
                     span.number-sale 0.00%
                     span.units-sale (0/2710 units)
                 .sale-precess-bar
                   progress( max="100" value="50").progress-bar
-
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
 import Chart from 'chart.js/auto';
+import {
+  ref, onMounted, inject,
+} from 'vue';
 
+const axios = inject('axios');
 const chart = ref(null);
+
+const bestSellerProducts = ref([]);
+const worstSellerProducts = ref([]);
+const preorders = ref([]);
+
+axios.post('/products')
+  .then(response => {
+    console.log(response);
+  })
+  .catch(error => {
+    console.log(error);
+  });
+
+axios.get('/preorders')
+  .then(response => {
+    preorders.value = response;
+  })
+  .catch(error => {
+    console.log(error);
+  });
 
 onMounted(() => {
   const ctx = chart.value.getContext('2d');
@@ -122,6 +133,23 @@ onMounted(() => {
     },
     options: { maintainAspectRatio: false },
   });
+
+  axios.get('/products/bestseller')
+    .then(response => {
+      bestSellerProducts.value = response;
+      console.log(response);
+    })
+    .catch(error => {
+      console.log(error);
+    });
+
+  axios.get('/products/worstseller')
+    .then(response => {
+      worstSellerProducts.value = response;
+    })
+    .catch(error => {
+      console.log(error);
+    });
 });
 </script>
 
