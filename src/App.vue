@@ -36,6 +36,7 @@ const initialize = async () => {
   const sessionToken = await getSessionToken(app);
 
   authStore.loadedToken(sessionToken);
+  setTimeout(initialize, 60000);
 };
 
 initialize();
