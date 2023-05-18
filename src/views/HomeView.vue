@@ -9,39 +9,16 @@
           span.title-text Sale in last 7 days
           h1.title-amount &eth;0
         .sale-chart
-          .chart-item
+          .chart-item(v-for="(data,index) in dataChart" :key="index")
+            .chart-node(:style="{bottom: `${data/maxChart * 100}%`}")
             .chart-item-text
-              span 19 Apr
-              span.item-text Sales: &eth;0
-          .chart-item
-            .chart-item-text
-              span 19 Apr
-              span.item-text Sales: &eth;0
-          .chart-item
-            .chart-item-text
-              span 19 Apr
-              span.item-text Sales: &eth;0
-          .chart-item
-            .chart-item-text
-              span 19 Apr
-              span.item-text Sales: &eth;0
-          .chart-item
-            .chart-item-text
-              span 19 Apr
-              span.item-text Sales: &eth;0
-          .chart-item
-            .chart-item-text
-              span 19 Apr
-              span.item-text Sales: &eth;0
-          .chart-item
-            .chart-item-text
-              span 19 Apr
-              span.item-text Sales: &eth;0
+              span {{ dataDayChart[index] }}
+              span.item-text Sales: {{ data }}$
               //- overview-2
       .overview-item.col-12.col-lg-3
         .sale-title
           span.title-text Open Pre-order Products
-          h1.title-amount.text-product 0
+          h1.title-amount.text-product {{ numberProduct }}
     .home-analytics
       canvas( ref="chart", style="width: 100%;height: 400px;" ).chart-home-analytics
     .home-summary.col.row
@@ -68,8 +45,6 @@
           .sale-th-title
             span Low Pre-order product Seller
           ul.sale-list
-            li.sale-item-product
-              h1(v-if="!bestSellerProducts[0]" style="width: 100%;text-align: center;font-size: 2rem;") No Found Product
             li.sale-item-product(v-for="worstSellerProduct in worstSellerProducts" :key="worstSellerProduct.id")
               .sale-cover-photo
                 img(
@@ -86,13 +61,44 @@
 </template>
 
 <script setup>
-import Chart from 'chart.js/auto';
+import Chart, { elements } from 'chart.js/auto';
 import {
   ref, onMounted, inject,
 } from 'vue';
 
+//get now date
+
+const today = new Date();
+const sevenDayAgo = new Date();
+
+sevenDayAgo.setDate(today.getDate() - 6);
+sevenDayAgo.setHours(0);
+sevenDayAgo.setMinutes(0);
+sevenDayAgo.setSeconds(0);
 const axios = inject('axios');
 const chart = ref(null);
+const numberProduct =ref(0);
+
+console.log(today.getDay());
+
+const dataDayChart = [];
+const dataChart = [0, 0, 0, 0, 0, 0, 0];
+const maxChart = ref(0);
+
+for (let i = 6; i >= 0; i-=1) {
+  const date = new Date();
+
+  date.setDate(date.getDate() - i);
+
+  const formattedDate = date.toLocaleDateString('en-US', {
+    day: 'numeric',
+    month: 'short',
+  });
+
+  dataDayChart.push(formattedDate);
+}
+
+console.log(dataDayChart);
 
 const bestSellerProducts = ref([]);
 const worstSellerProducts = ref([]);
@@ -106,9 +112,60 @@ axios.post('/products')
     console.log(error);
   });
 
+axios.get('/products')
+  .then(response => {
+    numberProduct.value = response.filter(element => element.status === 1).length;
+    console.log(response.length);
+  })
+  .catch(error => {
+    console.log(error);
+  });
+
 axios.get('/preorders')
   .then(response => {
     preorders.value = response;
+
+    return response;
+  })
+  .then(response => {
+    response.forEach(element => {
+      if (element.create_at >= sevenDayAgo) {
+        const disDay = element.create_at.getDate() - sevenDayAgo.getDate();
+
+        switch (disDay) {
+          case 0:
+            dataChart[6]+=1;
+            maxChart.value = Math.max(dataChart[6], maxChart);
+            break;
+          case 1:
+            dataChart[5]+=1;
+            maxChart.value = Math.max(dataChart[5], maxChart);
+            break;
+          case 2:
+            dataChart[4]+=1;
+            maxChart.value = Math.max(dataChart[4], maxChart);
+            break;
+          case 3:
+            dataChart[3]+=1;
+            maxChart.value = Math.max(dataChart[3], maxChart);
+            break;
+          case 4:
+            dataChart[2]+=1;
+            maxChart.value = Math.max(dataChart[2], maxChart);
+            break;
+          case 5:
+            dataChart[1]+=1;
+            maxChart.value = Math.max(dataChart[1], maxChart);
+            break;
+          case 6:
+            dataChart[0]+=1;
+            maxChart.value = Math.max(dataChart[0], maxChart);
+            break;
+          default:
+            break;
+        }
+      }
+    });
   })
   .catch(error => {
     console.log(error);
@@ -120,11 +177,11 @@ onMounted(() => {
   new Chart(ctx, {
     type: 'line',
     data: {
-      labels: ['Mon', 'Tue', 'Web', 'Thurs', 'Fri', 'Sat', 'Sun'],
+      labels: dataDayChart,
       datasets: [
         {
           label: 'Number of products sold',
-          data: [65, 59, 80, 81, 56, 55, 40, 0],
+          data: dataChart,
           fill: false,
           borderColor: 'rgb(75, 192, 192)',
           tension: 0.1,
@@ -213,8 +270,7 @@ onMounted(() => {
               height: 100%;
               width: 20px;
             }
-            &::after{
-              content:'';
+            .chart-node{
               position: absolute;
               display: none;
               left: 50%;
@@ -223,7 +279,7 @@ onMounted(() => {
               height: 6px;
               background-color: brown;
               border-radius: 50%;
-              bottom:-2px;
+              bottom:0;
             }
             &:nth-of-type(-n+4){
               .chart-item-text{
@@ -239,7 +295,7 @@ onMounted(() => {
               background-color: $border-color;
             }
 
-            &:hover::after{
+            &:hover .chart-node{
               display: block;
             }
             &:hover .chart-item-text{

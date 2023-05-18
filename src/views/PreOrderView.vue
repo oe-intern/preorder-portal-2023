@@ -4,7 +4,7 @@
     .title-header
       span Pre-orders
     .content-header(:class="{'no-blur' : isChecked}")
-      button.btn-fulfill(@click="fulFill")  Ready to FulFill
+      button.btn-fulfill(@click="handelShipping")  Ready to Shipping
   .pre-order-task-bar
     .pre-order-search
       label(for="searchProduct").search-icon
@@ -18,7 +18,7 @@ placeholder="Search preorder by customerName").search-input
     .pre-order-sort
       .sort-by
         label( for="sort-by-list" ).title-sort-by Sort by
-        select(id="sort-by-list" name="typeSort" ).sort-by-list
+        select(id="sort-by-list" v-mode="sortType" ).sort-by-list
           option(value="newest").sort-by-item Newest first
           option(value="oldest").sort-by-item Oldest first
           option(value="the most expensive").sort-by-item The most expensive first
@@ -65,7 +65,7 @@ placeholder="Search preorder by customerName").search-input
                 li.customer-location {{ preOrder.customer.address }}
           td.product-date.pre-item {{ preOrder.create_at }}
           td.product-quantity.pre-item {{ preOrder.quantity }}
-          td.product-total.pre-item &eth;{{ preOrder.variant.price * preOrder.quantity }}
+          td.product-total.pre-item &eth;{{ preOrder.total }}
 </template>
 
 <script setup>
@@ -84,6 +84,7 @@ const isCheckedAll = ref(false);
 const preOrders = ref([]);
 const isChecked = ref(false);
 const searchPreorder = ref('');
+const sortType = ref('');
 
 // axios.post('/products')
 //   .then(response => {
@@ -116,11 +117,14 @@ const handleCheckbox = e => {
   }
 };
 
-watch(searchPreorder, (newValue, oldValue) => {
+watch(searchPreorder.value, (newValue, oldValue) => {
   if (newValue === '') {
     axios.get('/preorders')
       .then(response => {
         preOrders.value = response;
+        preOrders.value.forEach((element, index) => {
+          preOrders.value[index].total = element.variants.price * element.quantity;
+        });
         arrayId.value = response.map(element => element.id);
       })
       .catch(
@@ -132,6 +136,9 @@ watch(searchPreorder, (newValue, oldValue) => {
     axios.get(`/preorders/${newValue}`)
       .then(response => {
         preOrders.value = response;
+        preOrders.value.forEach((element, index) => {
+          preOrders.value[index].total = element.variants.price * element.quantity;
+        });
         arrayId.value = response.map(element => element.id);
       })
       .catch(error => {
@@ -140,11 +147,89 @@ watch(searchPreorder, (newValue, oldValue) => {
   }
 });
 
+watch(sortType.value, (newValue, oldValue) => {
+  switch (newValue) {
+    case 'newest':
+      preOrders.value.sort((a, b) => {
+        const x = a.create_at;
+        const y = b.create_at;
+
+        if (x>y) {
+          return 1;
+        }
+
+        if (x<y) {
+          return -1;
+        }
+
+        return 0;
+      });
+      arrayId.value = preOrders.value.map(element => element.id);
+      break;
+    case 'oldest':
+      preOrders.value.sort((a, b) => {
+        const x = a.create_at;
+        const y = b.create_at;
+
+        if (x>y) {
+          return -1;
+        }
+
+        if (x<y) {
+          return 1;
+        }
+
+        return 0;
+      });
+      arrayId.value = preOrders.value.map(element => element.id);
+      break;
+    case 'the most expensive':
+      preOrders.value.sort((a, b) => {
+        const x = a.total;
+        const y = b.total;
+
+        if (x>y) {
+          return -1;
+        }
+
+        if (x<y) {
+          return 1;
+        }
+
+        return 0;
+      });
+      arrayId.value = preOrders.value.map(element => element.id);
+      break;
+    case 'cheapest':
+      preOrders.value.sort((a, b) => {
+        const x = a.total;
+        const y = b.total;
+
+        if (x>y) {
+          return 1;
+        }
+
+        if (x<y) {
+          return -1;
+        }
+
+        return 0;
+      });
+      arrayId.value = preOrders.value.map(element => element.id);
+      break;
+    default:
+      break;
+  }
+});
+
 onMounted(() => {
   axios.get('/preorders')
     .then(response => {
       preOrders.value = response;
-      console.log(response);
+      preOrders.value.forEach((element, index) => {
+        preOrders.value[index].total = element.variants.price * element.quantity;
+      });
+      console.log(preOrders.value);
       arrayId.value = response.map(element => element.id);
     })
     .catch(error => {
@@ -152,8 +237,15 @@ onMounted(() => {
     });
 });
 
-const fulFill= () => {
-  console.log(123);
+const handelShipping= () => {
+  console.log(preOrderCheck.value);
+  axios.post('preorder/shipping', preOrderCheck.value)
+    .then(response => {
+      console.log(response);
+    })
+    .catch(error => {
+      console.log(error);
+    });
 };
 </script>
 
