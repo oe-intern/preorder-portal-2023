@@ -8,7 +8,7 @@ interface IAuthState {
 }
 
 const defaultState: IAuthState = {
-  status: AUTH_STATUS.success,
+  status: AUTH_STATUS.initial,
   token: '',
 };
 
@@ -23,7 +23,12 @@ export const useAuthStore = defineStore({
 
   actions: {
     loadedToken(token: any) {
+      this.status = AUTH_STATUS.loading;
       axios.defaults.headers.common.Authorization = `Bearer ${token}`;
+
+      if (token) {
+        this.status = AUTH_STATUS.success;
+      }
     },
   },
 });

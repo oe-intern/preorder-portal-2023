@@ -1,6 +1,9 @@
 <!-- eslint-disable max-len -->
 <template lang="pug">
 .pro-order-page.col.container
+  //- success message
+  .success-cover(v-if="isSuccess" :class="{'show-message': isSuccess}")
+    h1.sucess-text You are Successfully
   .header-pro-order
     .title-header
       span Product pro-order List
@@ -116,6 +119,8 @@ const router = useRouter();
 
 const searchStatus = ref('all');
 const searchType = ref('');
+
+const isSuccess = ref(false);
 
 const isCheckedAll = ref(false);
 

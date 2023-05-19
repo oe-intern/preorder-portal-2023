@@ -184,3 +184,42 @@ th,td{
 	z-index: 100;
 	left: 0px;
 }
+
+.loading-view, .loading-section{
+	width: 100%!important;
+	height: 100%!important;
+	svg{
+		width: 100%;
+		height: 100%;
+	}
+}
+
+.loading-icon{
+	background-color: red;
+	width: 1000px;
+	height: 1000px;
+}
+
+@keyframes toLeft{
+		0% { transform: translateX(calc(-100% - 20px));}
+		50% {transform: translateX(-50%);}
+		100% {transform: translateX(0);}
+}
+
+.success-cover{
+	position: fixed;
+    background-color: lightgreen;
+    top: 100px;
+    left: 20px;
+    padding: 16px;
+    border-radius: 10px;
+    color: black;
+		font-size: 1.25rem;
+		z-index: 1000;
+		transform: translateX(calc(-100% - 20px));
+		animation: toLeft 1s ease;
+}
+
+.show-message{
+	transform: translateX(0);
+}

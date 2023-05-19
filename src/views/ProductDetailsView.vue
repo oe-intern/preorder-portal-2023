@@ -162,6 +162,7 @@ onMounted(() => {
   axios.get(`/products/variants/${props.id}`)
     .then(response => {
       variants.value = response.variants;
+      console.log(response.variants);
       variantsStock.value = response.variants.map(
         item => {
           total.value.inventory += item.inventory;

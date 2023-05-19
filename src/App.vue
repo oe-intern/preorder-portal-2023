@@ -4,20 +4,22 @@ AppProvider
     // If app is ready
     .portal(v-if="isAppReady")
       router-view
-
     // If app is not ready
     .processing-section
       .error-section(v-if="isAppError")
         // TODO: handle error
-      .loading-section
+      .loading-section(v-show="!isAppReady && !isAppError")
+        Spinner.loading-view(v-bind="props", size="large")
         // TODO: handle loading section (Spinner, loading icon...)
 </template>
 
 <script setup lang="ts">
-import { computed, inject } from 'vue';
+import {
+  computed, inject, ref,
+} from 'vue';
 import { useAuthStore } from '@/stores';
 import { AUTH_STATUS } from '@/configs';
-import { AppProvider } from '@ownego/polaris-vue';
+import { AppProvider, Spinner } from '@ownego/polaris-vue';
 //appBridge
 import createApp from '@shopify/app-bridge';
 import { getSessionToken } from '@shopify/app-bridge/utilities';
@@ -30,6 +32,8 @@ const app = createApp({
   host: scaffoldingEmbeddedData.host,
 });
 
+const props = ref();
+
 const authStore = useAuthStore();
 
 const initialize = async () => {
@@ -40,6 +44,7 @@ const initialize = async () => {
 };
 
 initialize();
+console.log(authStore.status);
 
 const isAppReady = computed<boolean>(() => authStore.status === AUTH_STATUS.success);
 const isAppError = computed<boolean>(() => authStore.status === AUTH_STATUS.error);

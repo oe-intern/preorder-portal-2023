@@ -62,10 +62,14 @@
 
 <script setup>
 import Chart, { elements } from 'chart.js/auto';
+import { useRoute } from 'vue-router';
 import {
   ref, onMounted, inject,
 } from 'vue';
 
+const axios = inject('axios');
+const chart = ref(null);
+const route = useRoute();
 //get now date
 
 const today = new Date();
@@ -75,12 +79,7 @@ sevenDayAgo.setDate(today.getDate() - 6);
 sevenDayAgo.setHours(0);
 sevenDayAgo.setMinutes(0);
 sevenDayAgo.setSeconds(0);
-const axios = inject('axios');
-const chart = ref(null);
 const numberProduct =ref(0);
-
-console.log(today.getDay());
-
 const dataDayChart = [];
 const dataChart = [0, 0, 0, 0, 0, 0, 0];
 const maxChart = ref(0);
@@ -98,7 +97,7 @@ for (let i = 6; i >= 0; i-=1) {
   dataDayChart.push(formattedDate);
 }
 
-console.log(dataDayChart);
+console.log(route.query.token);
 
 const bestSellerProducts = ref([]);
 const worstSellerProducts = ref([]);
