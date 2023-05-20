@@ -1,3 +1,4 @@
+<!-- eslint-disable max-len -->
 <template lang="pug">
 .container.col.home-page
   .home-header
@@ -27,17 +28,20 @@
           .sale-th-title
             span Top Pre-order product Seller
           ul.sale-list
-            li.sale-item-product(v-for="bestSellerProduct in bestSellerProducts" :key="bestSellerProduct.id")
+            li.sale-item-product(
+              v-for="bestSellerProduct in bestSellerProducts"
+              :key="bestSellerProduct.id"
+              @click.prevent="showProduct(bestSellerProduct.id)")
               .sale-cover-photo
                 img(
-  :src="bestSellerProduct.image_src",
+                  :src="bestSellerProduct.image_src !== 'no_image' ? bestSellerProduct.image_src : 'https://static.vecteezy.com/system/resources/thumbnails/008/015/799/small/illustration-of-no-image-available-icon-template-for-no-image-or-picture-coming-soon-free-vector.jpg'"
                   :alt="bestSellerProduct.title").image-sale
               .content-sale
                 .content-sale-text
                   span.name-product-sale {{ bestSellerProduct.title }}
                   .sale-precess-text
-                    span.number-sale 0.00%
-                    span.units-sale (0/2710 units)
+                    span.number-sale {{ bestSellerProduct.stock ? bestSellerProduct.preorder / bestSellerProduct.stock *100 : 0 }}%
+                    span.units-sale ({{ bestSellerProduct.preorder }} / {{ bestSellerProduct.stock }} units)
                 .sale-precess-bar
                   progress( max="100" value="50").progress-bar
       .sale-th-cover.col-12.col-xl-6
@@ -45,32 +49,45 @@
           .sale-th-title
             span Low Pre-order product Seller
           ul.sale-list
-            li.sale-item-product(v-for="worstSellerProduct in worstSellerProducts" :key="worstSellerProduct.id")
+            li.sale-item-product(
+              v-for="worstSellerProduct in worstSellerProducts"
+              :key="worstSellerProduct.id"
+              @click.prevent="showProduct(worstSellerProduct.id)" )
               .sale-cover-photo
                 img(
-  :src="worstSellerProduct.image_src",
+                  :src="worstSellerProduct.image_src !== 'no_image' ? worstSellerProduct.image_src : 'https://static.vecteezy.com/system/resources/thumbnails/008/015/799/small/illustration-of-no-image-available-icon-template-for-no-image-or-picture-coming-soon-free-vector.jpg'",
                   :alt="worstSellerProduct.title").image-sale
               .content-sale
                 .content-sale-text
                   span.name-product-sale {{ worstSellerProduct.title }}
                   .sale-precess-text
-                    span.number-sale 0.00%
-                    span.units-sale (0/2710 units)
+                    span.number-sale {{ worstSellerProduct.stock ? worstSellerProduct.preorders / worstSellerProduct.stock : 0 }}%
+                    span.units-sale ({{ worstSellerProduct.preorders }} / {{ worstSellerProduct.stock }} units)
                 .sale-precess-bar
                   progress( max="100" value="50").progress-bar
 </template>
 
 <script setup>
 import Chart, { elements } from 'chart.js/auto';
-import { useRoute } from 'vue-router';
+import { useRouter } from 'vue-router';
 import {
   ref, onMounted, inject,
 } from 'vue';
 
 const axios = inject('axios');
 const chart = ref(null);
-const route = useRoute();
+const router = useRouter();
 //get now date
+
+(async () => {
+  await axios.post('/products')
+    .then(response => {
+      console.log(response);
+    })
+    .catch(error => {
+      console.log(error);
+    });
+})();
 
 const today = new Date();
 const sevenDayAgo = new Date();
@@ -97,19 +114,9 @@ for (let i = 6; i >= 0; i-=1) {
   dataDayChart.push(formattedDate);
 }
 
-console.log(route.query.token);
-
 const bestSellerProducts = ref([]);
 const worstSellerProducts = ref([]);
 const preorders = ref([]);
-
-axios.post('/products')
-  .then(response => {
-    console.log(response);
-  })
-  .catch(error => {
-    console.log(error);
-  });
 
 axios.get('/products')
   .then(response => {
@@ -170,7 +177,14 @@ axios.get('/preorders')
     console.log(error);
   });
 
-onMounted(() => {
+const showProduct = id => {
+  router.push({
+    name: 'detailsProduct',
+    params: { id: id },
+  });
+};
+
+onMounted(async () => {
   const ctx = chart.value.getContext('2d');
 
   new Chart(ctx, {
@@ -190,22 +204,59 @@ onMounted(() => {
     options: { maintainAspectRatio: false },
   });
 
-  axios.get('/products/bestseller')
+  await axios.get('/products/bestseller')
     .then(response => {
       bestSellerProducts.value = response;
-      console.log(response);
     })
     .catch(error => {
       console.log(error);
     });
 
-  axios.get('/products/worstseller')
+  await axios.get('/products/worstseller')
     .then(response => {
       worstSellerProducts.value = response;
     })
     .catch(error => {
       console.log(error);
     });
+  // solve stock, preorder and sold
+  await Promise.all(
+    bestSellerProducts.value.map(async (element, index) => {
+      try {
+        const response = await axios.get(`/products/variants/${element.id}`);
+
+        console.log(response.variants);
+        bestSellerProducts.value[index].stock = 0;
+        bestSellerProducts.value[index].preorder = 0;
+        response.variants.forEach(element => {
+          bestSellerProducts.value[index].stock += element.stock;
+          bestSellerProducts.value[index].preorder += element.preorder;
+        });
+      } catch (error) {
+        console.log(error);
+      }
+    }),
+  );
+  console.log(bestSellerProducts.value);
+
+  await Promise.all(
+    worstSellerProducts.value.map(async (element, index) => {
+      try {
+        const response = await axios.get(`/products/variants/${element.id}`);
+
+        worstSellerProducts.value[index].stock = 0;
+        worstSellerProducts.value[index].preorder = 0;
+        response.variants.forEach(element => {
+          worstSellerProducts.value[index].stock += element.stock;
+          worstSellerProducts.value[index].preorder += element.preorder;
+        });
+
+      } catch (error) {
+        console.log(error);
+      }
+    }),
+  );
+  console.log(worstSellerProducts.value);
 });
 </script>
 
@@ -349,9 +400,15 @@ onMounted(() => {
           border-top: 1px solid $border-color;
           padding-top:16px;
           padding-bottom: 8px;
+          margin-top: 12px;
+          &:hover{
+            cursor: pointer;
+            background-color: rgba($primary-color, 0.2);
+          }
           .sale-cover-photo{
             width: 50px;
             height: 50px;
+            margin: 0 8px;
             .image-sale{
               width:100%;
               height:100%;
@@ -371,9 +428,11 @@ onMounted(() => {
               padding-bottom: 4px;
               font-size: 1.175rem;
               .name-product-sale{
-
+                margin-right: 20px;
               }
               .sale-precess-text{
+                min-width: 160px;
+                text-align: center;
                 .number-sale{
 
                 }

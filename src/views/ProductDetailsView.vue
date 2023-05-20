@@ -1,16 +1,20 @@
+<!-- eslint-disable max-len -->
 <template lang="pug">
 .container
+  //- success message
+  .success-cover(v-if="isSuccess" :class="{'show-message': isSuccess}")
+    h1.success-text You are Successfully
   .header
     .header-text
-      router-link(:to="{name:'products'}").link-back
+      .link-back(@click="goBack")
         .btn-back
           CircleLeftMajor.back-icon
           span.btn-header-text back to previous page
       h1.text-content {{ productDetails.title }}
     .btn-function
-      button.btn.btn-danger(@click="deleteProduct") Delete
-      button.btn.btn-primary.m-s-1(@click="updateProduct") Update
-      button.btn.btn-normal(@click="fullfilProduct") Ready to Fulfill
+      button.btn.btn-danger(v-if=" productDetails.status===1 " @click="deleteProduct") Inactive
+      button.btn.btn-primary.m-s-1(@click="updateProduct") {{ productDetails.status === 1 ? 'Update' : 'Active' }}
+      button.btn.btn-normal(v-if="productDetails.status===1" @click="fullfilProduct") Ready to Fulfill
   .body-product
     .info-details-product
       .product-info
@@ -19,7 +23,7 @@
           .edit-header-content
             span(:class="productDetails.status ===1 ? 'active' : 'inactive' ").edit-status {{productDetails.status ===1 ? 'active' : 'inactive'}}
         .product-summary
-          img(:src="productDetails.image_src" :alt="productDetails.title").summary-photo
+          img(:src="productDetails.image_src!== 'no_image' ? productDetails.image_src : 'https://static.vecteezy.com/system/resources/thumbnails/008/015/799/small/illustration-of-no-image-available-icon-template-for-no-image-or-picture-coming-soon-free-vector.jpg'" :alt="productDetails.title").summary-photo
           .summary-content
             h1.summary-name-product {{ productDetails.title }}
             .summary-ship-date {{ productDetails.date_start?DateStart:'unset' }} – {{ productDetails.date_end?DateEnd:'unset' }}
@@ -42,12 +46,13 @@
                 td.units.units-name
                   span.variant-name {{ variant.title_var }}
                   span.variant-sku {{ variant.sku }}
-                td.units.units-buy {{ variant.inventory }}
+                td.units.units-buy {{ variant.stock }}
                 td.units.units-sold {{ variant.preorder }}
                 td.units.units-cancel {{ variant.sold }}
       .product-edit
         .product-stock
           h1.text-edit Edit stock levels
+          h1.error-message(v-if="errors.variants_stock") {{ errors.variants_stock[0] }}
           table.list-edit-stock.separate-border
             thead
               tr
@@ -82,13 +87,14 @@ import CircleLeftMajor from '@icons/CircleLeftMajor.svg';
 import {
   ref, reactive, inject, onMounted, defineProps,
 } from 'vue';
+import { useRouter } from 'vue-router';
 
 ///
 const axios = inject('axios');
+const router = useRouter();
 
 const props = defineProps(['id']);
-
-console.log(props);
+const isSuccess = ref(false);
 
 const productDetails = ref({});
 
@@ -98,8 +104,12 @@ const variants = ref({});
 
 const errors =ref({});
 
+const goBack = () => {
+  router.back();
+};
+
 const total = ref({
-  inventory: 0,
+  stock: 0,
   preorder: 0,
   sold: 0,
 });
@@ -133,7 +143,10 @@ const deleteProduct= () => {
   axios.put(`/products/deactivate/${props.id}`)
     .then(
       response => {
-        console.log(response);
+        isSuccess.value = true;
+        setTimeout(() => {
+          isSuccess.value = false;
+        }, 2500);
       })
     .catch(
       error => {
@@ -145,13 +158,32 @@ const deleteProduct= () => {
 const updateProduct= () => {
   const fields = {};
 
+  fields.id = props.id;
   fields.date_start = selectedDate.value.start;
   fields.date_end = selectedDate.value.end;
   fields.variants_stock = variantsStock.value;
   console.log(fields);
-  axios.put(`/products/edit/${props.id}`, fields)
+  axios.put('/products/activate', fields)
     .then(response => {
       console.log(response);
+      isSuccess.value = true;
+      setTimeout(() => {
+        isSuccess.value = false;
+      }, 2500);
+    })
+    .catch(error => {
+      console.log(error);
+    });
+};
+
+const fullfilProduct = () => {
+  axios.put(`/products/fullfil/${props.id}`)
+    .then(response => {
+      console.log(response);
+      isSuccess.value = true;
+      setTimeout(() => {
+        isSuccess.value = false;
+      }, 2500);
     })
     .catch(error => {
       console.log(error);
@@ -165,13 +197,13 @@ onMounted(() => {
       console.log(response.variants);
       variantsStock.value = response.variants.map(
         item => {
-          total.value.inventory += item.inventory;
+          total.value.stock += item.stock;
           total.value.preorder+= item.preorder;
           total.value.sold += item.sold;
 
           return {
             id: item.id,
-            stock: item.inventory,
+            stock: item.stock,
           };
         },
       );

@@ -1,13 +1,13 @@
 <!-- eslint-disable max-len -->
 <template lang="pug">
 .container
+  //- success message
+  .success-cover(v-if="isSuccess" :class="{'show-message': isSuccess}")
+    h1.success-text You are Successfully
   .add-page
-    //- success message
-    .success-div(v-if="success.isShow")
-      h1.success-title {{ success.title }}
     .header
       .header-text
-        router-link(:to="{name:'products'}").link-back
+        .link-back( @click="goBack")
           .btn-back
             CircleLeftMajor.back-icon
             span.btn-header-text back to previous page
@@ -29,6 +29,7 @@
     @focus="showRecommended"
     @blur="hiddenRecommended"
     )
+            h1.error-message(v-if="errors.id") {{ errors.id[0] }}
             .list-suggested-product(v-if="isShowRecommended")
               .product-choice(
                 v-for="productRecommend in productListRecommend"
@@ -36,11 +37,11 @@
                 @click="choseProduct(productRecommend)"
                 @mousedown="disableBlur = true"
               )
-                img(:src="productRecommend.image_src").product-photo
+                img(:src="productRecommend.image_src !=='no_image' ? productRecommend.image_src : 'https://static.vecteezy.com/system/resources/thumbnails/008/015/799/small/illustration-of-no-image-available-icon-template-for-no-image-or-picture-coming-soon-free-vector.jpg'").product-photo
                 .product-body
                   h3.product-text {{ productRecommend.title }}
           .product-choice(v-if="productChoice.image_src" style="margin-top: 12px;")
-            img(:src="productChoice.image_src").product-photo
+            img(:src="productChoice.image_src !== 'no_image' ? productChoice.image_src : 'https://static.vecteezy.com/system/resources/thumbnails/008/015/799/small/illustration-of-no-image-available-icon-template-for-no-image-or-picture-coming-soon-free-vector.jpg'").product-photo
             .product-body
               h3.product-text {{ productChoice.title }}
       .part
@@ -56,6 +57,7 @@
   :year="pickerView.year"
   @month-change="handleMonthChange"
             )
+          h1.error-message(v-if="errors.date_start || errors.date_end") {{ errors.date_start[0] || errors.date_end[0] }}
       .part
         .part-header
           h2.part-text 3. <b>How many</b> do you want to make available for pre-order?
@@ -71,20 +73,27 @@ type="number"
 step="1"
 min="0"
 ).variant-input
+          h1.error-message(v-if="errors.variants_stock") {{ errors.variants_stock[0] }}
 </template>
 
 <script setup>
 
 import CircleLeftMajor from '@icons/CircleLeftMajor.svg';
+import { useRouter } from 'vue-router';
 import { DatePicker } from '@ownego/polaris-vue';
 import {
   ref, reactive, onMounted, inject, watch,
 } from 'vue';
 
+const router = useRouter();
 const axios = inject('axios');
 const errors =ref({});
-const success = ref({ isShow: false });
+const isSuccess = ref(false);
 const disableBlur = ref(false);
+
+const goBack = () => {
+  router.back();
+};
 
 //product recommend
 const isShowRecommended = ref(false);
@@ -194,15 +203,16 @@ watch(
 const submit = () => {
   const fields = {};
 
+  fields.id = productChoice.value.id;
   fields.date_start = selectedDate.value.start;
   fields.date_end = selectedDate.value.end;
   fields.variants_stock = variantsStock.value;//mot mang cac object voi key la id cua variant va value la inventory cua no
   console.log(fields);
-  axios.post(`/products/active/${productChoice.value.id}`, fields)
+  axios.put('/products/activate', fields)
     .then(response => {
-      success.value.isShow = true;
+      isSuccess.value = true;
       setInterval(() => {
-        success.value.isShow = false;
+        isSuccess.value = false;
       }, 2500);
     })
     .catch(error => {

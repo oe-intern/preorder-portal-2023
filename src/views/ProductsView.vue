@@ -3,7 +3,7 @@
 .pro-order-page.col.container
   //- success message
   .success-cover(v-if="isSuccess" :class="{'show-message': isSuccess}")
-    h1.sucess-text You are Successfully
+    h1.success-text You are Successfully
   .header-pro-order
     .title-header
       span Product pro-order List
@@ -41,7 +41,6 @@
         select(id="status" v-model="searchStatus" ).sort-by-list
           option(value="all").sort-by-item ALL
           option(value="preOrder").sort-by-item Pre-Order
-          option(value="readyToFullfil").sort-by-item Ready to Fullfil
   .pro-order-list
     table.pro-order-table.overflow-column.separate-border
       thead
@@ -82,7 +81,7 @@ v-for="(product ,index) in products"
             div(style="margin-left: 24px;")
               ul.refer-list(@click.prevent="showProduct(product.id)")
                 li.refer-image-cover
-                  img(:src="product.image_src").product-photo
+                  img(:src="product.image_src!== 'no_image' ?product.image_src : 'https://static.vecteezy.com/system/resources/thumbnails/008/015/799/small/illustration-of-no-image-available-icon-template-for-no-image-or-picture-coming-soon-free-vector.jpg'").product-photo
                 li.refer-name
                   span.product-name {{product.title}}
           td.pro-item
@@ -137,14 +136,45 @@ const variantsArray = ref([]);
 const searchProduct = ref('');
 const isChecked = ref(false);
 
-//function always run
-// axios.post('/products')
-//   .then(response => {
-//     console.log(response);
-//   })
-//   .catch(error => {
-//     console.log(error);
-//   });
+const fetchAllInfoProduct = async () => {
+  ///get all products
+  await axios.get('/products')
+    .then(response => {
+      products.value = response;
+      console.log(response);
+      arrayId.value = response.map((element, index) => {
+        products.value[index].stock = 0;
+        products.value[index].preorder = 0;
+        products.value[index].sold = 0;
+
+        return element.id;
+      });
+    })
+    .catch(
+      error => {
+        console.log(error);
+      },
+    );
+  //get all variants
+  await axios.get('/variants')
+    .then(response => {
+      variants.value = response;
+    })
+    .catch(error => {
+      console.log(error);
+    });
+  //sold,pre,sold for product
+  products.value.forEach(product => {
+    const array = variants.value.filter(variant => variant.product_id === product.id);
+
+    array.forEach(variant => {
+      product.stock += variant.stock;
+      product.preorder += variant.preorder;
+      product.sold += variant.sold;
+    });
+    product.price = array[0].price;
+  });
+};
 
 //function run when call
 const handelAddNewProduct = () => {
@@ -187,32 +217,11 @@ const showProduct = id => {
 watch(searchStatus, (newValue, oldValue) => {
   switch (newValue) {
     case 'all':
-      axios.get('/products')
-        .then(response => {
-          products.value = response;
-          arrayId.value = response.map(element => element.id);
-        })
-        .catch(
-          error => {
-            console.log(error);
-          },
-        );
+      fetchAllInfoProduct();
       break;
     case 'preOrder':
       products.value = products.value.filter(elements => elements.status===1);
       arrayId.value = products.value.map(item => item.id);
-      break;
-    case 'readyToFullfil':
-      axios.get('/products/ready-to-fulfill')
-        .then(response => {
-          products.value = response;
-          arrayId.value = response.map(element => element.id);
-        })
-        .catch(
-          error => {
-            console.log(error);
-          },
-        );
       break;
     default:
       break;
@@ -340,6 +349,18 @@ watch(searchProduct, (newValue, oldValue) => {
           console.log(error);
         },
       );
+    //sold,pre,sold
+    products.value.forEach(product => {
+      const array = variants.value.filter(variant => variant.product_id === product.id);
+
+      console.log(array);
+      array.forEach(variant => {
+        product.stock += variant.stock;
+        product.preorder += variant.preorder;
+        product.sold += variant.sold;
+      });
+      product.price = array[0].price;
+    });
   } else {
     axios.get(`/products/search/name/${newValue}`)
       .then(response => {
@@ -349,44 +370,38 @@ watch(searchProduct, (newValue, oldValue) => {
       .catch(error => {
         console.log(error);
       });
+    //sold,pre,sold
+    products.value.forEach(product => {
+      const array = variants.value.filter(variant => variant.product_id === product.id);
+
+      console.log(array);
+      array.forEach(variant => {
+        product.stock += variant.stock;
+        product.preorder += variant.preorder;
+        product.sold += variant.sold;
+      });
+      product.price = array[0].price;
+    });
   }
 });
 
 //when component mount function is call
-onMounted(async () => {
-  ///get all products
-  await axios.get('/products')
-    .then(response => {
-      products.value = response;
-      arrayId.value = response.map(element => element.id);
-    })
-    .catch(
-      error => {
-        console.log(error);
-      },
-    );
-  // solve stock, preorder and sold
-  // variantsArray.value = await Promise.all(
-  //   products.value.map(async (element, index) => {
-  //     try {
-  //       const response = await axios.get(`/products/variants/${element.id}`);
-
-  //       products.value[index].price = response.variants[0].price;
-
-  //       return response.variants;
-  //     } catch (error) {
-  //       console.log(error);
-
-  //       return [];
-  //     }
-  //   }),
-  // );
-
-  // console.log(products.value);
+onMounted(() => {
+  fetchAllInfoProduct();
 });
 
 const fulFill = () => {
   console.log(productCheck.value);
+  axios.post('/products/fulfill', productCheck.value)
+    .then(() => {
+      isSuccess.value = true;
+      setTimeout(() => {
+        isSuccess.value = false;
+      }, 2500);
+    })
+    .catch(error => {
+      console.log(error);
+    });
 };
 
 </script>

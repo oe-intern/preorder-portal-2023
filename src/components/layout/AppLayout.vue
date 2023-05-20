@@ -15,8 +15,6 @@ import Header from './Header.vue';
 .under-header {
   padding-top: $header-height;
   height: 100vh;
-  overflow: auto;
-
   .nav-app {
     overflow: auto;
     height: 100%;
@@ -30,8 +28,6 @@ import Header from './Header.vue';
     .content {
       padding-bottom: 120px;
     }
-
-    overflow: auto;
   }
 }
 </style>

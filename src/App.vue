@@ -5,7 +5,7 @@ AppProvider
     .portal(v-if="isAppReady")
       router-view
     // If app is not ready
-    .processing-section
+    .processing-section(v-if="!isAppReady")
       .error-section(v-if="isAppError")
         // TODO: handle error
       .loading-section(v-show="!isAppReady && !isAppError")

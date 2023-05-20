@@ -1,5 +1,9 @@
+<!-- eslint-disable max-len -->
 <template lang="pug">
 .pre-order-page.col.container
+  //success message
+  .success-cover(v-if="isSuccess" :class="{'show-message': isSuccess}")
+    h1.success-text You are Successfully
   .header-pre-order
     .title-header
       span Pre-orders
@@ -52,7 +56,7 @@ placeholder="Search preorder by customerName").search-input
           td.product-refer.pre-item
             ul.refer-list
               li.refer-image-cover
-                img( :src="preOrder.variant.image_src").div-image
+                img(:src="preOrder.variant.image_src!== 'no_image'? preOrder.variant.image_src : 'https://static.vecteezy.com/system/resources/thumbnails/008/015/799/small/illustration-of-no-image-available-icon-template-for-no-image-or-picture-coming-soon-free-vector.jpg' ").div-image
               li.refer-name
                 span.product-name {{ preOrder.variant.name }}
                 span.refer-type {{ preOrder.variant.title_var }}
@@ -78,6 +82,8 @@ import {
 
 const axios = inject('axios');
 const router = useRouter();
+const isSuccess = ref(false);
+const errors = ref({});
 const preOrderCheck = ref([]);
 const arrayId = ref([]);
 const isCheckedAll = ref(false);
@@ -85,14 +91,6 @@ const preOrders = ref([]);
 const isChecked = ref(false);
 const searchPreorder = ref('');
 const sortType = ref('');
-
-// axios.post('/products')
-//   .then(response => {
-//     console.log(response);
-//   })
-//   .catch(error => {
-//     console.log(error);
-//   });
 
 const handleToggleCheckAll = e => {
   if (isCheckedAll.value) {
@@ -242,6 +240,10 @@ const handelShipping= () => {
   axios.post('preorder/shipping', preOrderCheck.value)
     .then(response => {
       console.log(response);
+      isSuccess.value = true;
+      setTimeout(() => {
+        isSuccess.value = false;
+      }, 2500);
     })
     .catch(error => {
       console.log(error);
