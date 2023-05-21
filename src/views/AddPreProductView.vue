@@ -183,7 +183,7 @@ watch(
         variantsStock.value = response.variants.map(item => {
           return {
             id: item.id,
-            stock: item.inventory,
+            stock: item.stock,
           };
         });
       })
