@@ -193,6 +193,10 @@ const deleteProduct= () => {
     .then(
       response => {
         isSuccess.value = true;
+        router.push({
+          name: 'products',
+          params: {},
+        });
         setTimeout(() => {
           isSuccess.value = false;
         }, 2500);
@@ -207,7 +211,7 @@ const deleteProduct= () => {
 const updateProduct= () => {
   const fields = {};
 
-  fields.id = props.id;
+  fields.product_id = props.id;
   fields.date_start = selectedDate.value.start;
   fields.date_end = selectedDate.value.end;
   fields.variants_stock = variantsStock.value;

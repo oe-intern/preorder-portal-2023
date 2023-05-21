@@ -83,7 +83,7 @@ v-for="(product ,index) in products"
                 li.refer-image-cover
                   img(:src="product.image_src!== 'no_image' ?product.image_src : 'https://static.vecteezy.com/system/resources/thumbnails/008/015/799/small/illustration-of-no-image-available-icon-template-for-no-image-or-picture-coming-soon-free-vector.jpg'").product-photo
                 li.refer-name
-                  span.product-name {{product.title}}
+                  div.product-name {{product.title}}
           td.pro-item
             span(:class="product.status=== 1 ? 'active' : 'inactive' ") {{ product.status=== 1 ? 'active' : 'inactive' }}
           td.product-vendor.pro-item {{ product.vendor }}
@@ -147,7 +147,21 @@ const fetchAllInfoProduct = async () => {
     .then(response => {
       products.value = response;
       console.log(response);
+      const options = {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      };
+
       arrayId.value = response.map((element, index) => {
+        if (element.date_start && element.date_end) {
+          const startDateObject = new Date(element.date_start);
+          const endDateObject = new Date(element.date_end);
+
+          products.value[index].date_start = startDateObject.toLocaleDateString('en-US', options);
+          products.value[index].date_end = endDateObject.toLocaleDateString('en-US', options);
+        }
+
         products.value[index].stock = 0;
         products.value[index].preorder = 0;
         products.value[index].sold = 0;
@@ -413,6 +427,10 @@ const fulFill = () => {
 
 <style scope lang='scss'>
   @import '@/scss/variables.scss';
+  .product-name{
+    width: 150px;
+    overflow-x: hidden;
+  }
   .pro-order-page {
     padding-top: 40px;
     .pro-check{
@@ -597,12 +615,13 @@ const fulFill = () => {
             font-weight: 600;
           }
           .product-shell{
+            width: 150px;
             .shell-header{
               text-align: left;
               padding-left: 8px;
             }
             .shell-progress{
-                width: 100%;
+                width: 140px;
                 height: 20px;
                 border: 1px solid #ccc;
                 background-color: #fff;

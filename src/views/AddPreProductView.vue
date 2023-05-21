@@ -203,7 +203,7 @@ watch(
 const submit = () => {
   const fields = {};
 
-  fields.id = productChoice.value.id;
+  fields.product_id = productChoice.value.id;
   fields.date_start = selectedDate.value.start;
   fields.date_end = selectedDate.value.end;
   fields.variants_stock = variantsStock.value;//mot mang cac object voi key la id cua variant va value la inventory cua no
