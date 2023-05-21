@@ -211,6 +211,7 @@ const submit = () => {
   axios.put('/products/activate', fields)
     .then(response => {
       isSuccess.value = true;
+      resetField();
       setInterval(() => {
         isSuccess.value = false;
       }, 2500);

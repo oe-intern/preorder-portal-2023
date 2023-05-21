@@ -61,8 +61,8 @@
                 .content-sale-text
                   span.name-product-sale {{ worstSellerProduct.title }}
                   .sale-precess-text
-                    span.number-sale {{ worstSellerProduct.stock ? worstSellerProduct.preorders / worstSellerProduct.stock : 0 }}%
-                    span.units-sale ({{ worstSellerProduct.preorders }} / {{ worstSellerProduct.stock }} units)
+                    span.number-sale {{ worstSellerProduct.stock ? worstSellerProduct.preorder / worstSellerProduct.stock : 0 }}%
+                    span.units-sale ({{ worstSellerProduct.preorder }} / {{ worstSellerProduct.stock }} units)
                 .sale-precess-bar
                   progress( max="100" value="50").progress-bar
 </template>
@@ -121,7 +121,6 @@ const preorders = ref([]);
 axios.get('/products')
   .then(response => {
     numberProduct.value = response.filter(element => element.status === 1).length;
-    console.log(response.length);
   })
   .catch(error => {
     console.log(error);
@@ -225,7 +224,6 @@ onMounted(async () => {
       try {
         const response = await axios.get(`/products/variants/${element.id}`);
 
-        console.log(response.variants);
         bestSellerProducts.value[index].stock = 0;
         bestSellerProducts.value[index].preorder = 0;
         response.variants.forEach(element => {
@@ -237,7 +235,6 @@ onMounted(async () => {
       }
     }),
   );
-  console.log(bestSellerProducts.value);
 
   await Promise.all(
     worstSellerProducts.value.map(async (element, index) => {
@@ -256,7 +253,6 @@ onMounted(async () => {
       }
     }),
   );
-  console.log(worstSellerProducts.value);
 });
 </script>
 

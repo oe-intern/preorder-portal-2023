@@ -10,7 +10,7 @@
         .btn-back
           CircleLeftMajor.back-icon
           span.btn-header-text back to previous page
-      h1.text-content {{ productDetails.title }}
+      h1.text-content {{ productDetails.title }} - {{ productDetails.vendor }}
     .btn-function
       button.btn.btn-danger(v-if=" productDetails.status===1 " @click="deleteProduct") Inactive
       button.btn.btn-primary.m-s-1(@click="updateProduct") {{ productDetails.status === 1 ? 'Update' : 'Active' }}
@@ -113,6 +113,55 @@ const total = ref({
   preorder: 0,
   sold: 0,
 });
+
+const fetchAllData = () => {
+  axios.get(`/products/variants/${props.id}`)
+    .then(response => {
+      variants.value = response.variants;
+      console.log(response.variants);
+      total.value = {
+        stock: 0,
+        preorder: 0,
+        sold: 0,
+      };
+      variantsStock.value = response.variants.map(
+        item => {
+          total.value.stock += item.stock;
+          total.value.preorder+= item.preorder;
+          total.value.sold += item.sold;
+
+          return {
+            id: item.id,
+            stock: item.stock,
+          };
+        },
+      );
+    })
+    .catch(error => {
+      console.log(error);
+    });
+  axios.get(`/products/search/id/${props.id}`)
+    .then(response => {
+      productDetails.value = response;
+      const dateObject = new Date(productDetails.value.created_at);
+      const startDateObject = new Date(productDetails.value.date_start);
+      const endDateObject = new Date(productDetails.value.date_end);
+      const options = {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      };
+
+      DateStart.value = startDateObject.toLocaleDateString('en-US', options);
+      DateEnd.value = endDateObject.toLocaleDateString('en-US', options);
+      DateCreated.value = dateObject.toLocaleDateString('en-US', options);
+    })
+    .catch(
+      error => {
+        console.log(error);
+      },
+    );
+};
 //Date
 
 const DateStart = ref('');
@@ -167,6 +216,7 @@ const updateProduct= () => {
     .then(response => {
       console.log(response);
       isSuccess.value = true;
+      fetchAllData();
       setTimeout(() => {
         isSuccess.value = false;
       }, 2500);
@@ -191,47 +241,7 @@ const fullfilProduct = () => {
 };
 
 onMounted(() => {
-  axios.get(`/products/variants/${props.id}`)
-    .then(response => {
-      variants.value = response.variants;
-      console.log(response.variants);
-      variantsStock.value = response.variants.map(
-        item => {
-          total.value.stock += item.stock;
-          total.value.preorder+= item.preorder;
-          total.value.sold += item.sold;
-
-          return {
-            id: item.id,
-            stock: item.stock,
-          };
-        },
-      );
-    })
-    .catch(error => {
-      console.log(error);
-    });
-  axios.get(`/products/search/id/${props.id}`)
-    .then(response => {
-      productDetails.value = response;
-      const dateObject = new Date(productDetails.value.created_at);
-      const startDateObject = new Date(productDetails.value.date_start);
-      const endDateObject = new Date(productDetails.value.date_end);
-      const options = {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-      };
-
-      DateStart.value = startDateObject.toLocaleDateString('en-US', options);
-      DateEnd.value = endDateObject.toLocaleDateString('en-US', options);
-      DateCreated.value = dateObject.toLocaleDateString('en-US', options);
-    })
-    .catch(
-      error => {
-        console.log(error);
-      },
-    );
+  fetchAllData();
 });
 
 </script>

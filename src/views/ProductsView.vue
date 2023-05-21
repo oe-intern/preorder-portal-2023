@@ -93,14 +93,19 @@ v-for="(product ,index) in products"
           td.product-date.pro-item
             span.date-to {{ product.date_end ? product.date_end : '' }}
           td.product-shell.pro-item
-            .shell-header(v-if="!product.status===1")
-              span.shell-title {{ variantsArray[index].reduce((total,object) => total + object.preorder,0) }} %
-              span.shell-text ({{ variantsArray[index].reduce((total,object) => total + object.sold, 0) }} / {{ variantsArray[index].reduce((total,object) => total + object.stock,0) }}  units)
+            .shell-header
+              span.shell-title {{ product.stock!==0 ?product.preorder /product.stock * 100 : 0 }} %
+              span.shell-text ( {{ product.preorder }} / {{ product.stock }} units)
             progress(
-              v-if="!product.status===1"
               max="100"
-              :value="variantsArray[index].reduce((total,object) => total + object.sold, 0) / variantsArray[index].reduce((total,object) => total + object.stock,0) * 100" ).shell-progress
-          td.product-fulfill.pro-item   {{ product.status===1? `${variantsArray[index].reduce((total,object) => total + object.sold, 0) / variantsArray[index].reduce((total,object) => total + object.stock,0) * 100 }%( ${variantsArray[index].reduce((total,object) => total + object.sold, 0)} / ${ variantsArray[index].reduce((total,object) => total + object.stock,0)}  units)`: "" }}
+              :value="product.stock!==0 ? product.preorder / product.stock * 100 : 0" ).shell-progress
+          td.product-shell.pro-item
+            .shell-header
+              span.shell-title {{ product.stock!==0 ?product.sold /product.stock * 100 : 0 }} %
+              span.shell-text ( {{ product.sold }} / {{ product.stock }} units)
+            progress(
+              max="100"
+              :value="product.stock!==0 ? product.sold / product.stock * 100 : 0" ).shell-progress
 </template>
 
 <script setup>
