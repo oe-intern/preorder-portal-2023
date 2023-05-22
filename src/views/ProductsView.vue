@@ -254,32 +254,71 @@ watch(searchType, (newValue, oldValue) => {
         const titleA= a.date_start;
         const titleB= b.date_start;
 
+        if (!titleA) {
+          return 1;
+        }
+
+        if (!titleB) {
+          return -1;
+        }
+
+        if (titleA === titleB) {
+          const dateEndA = a.date_end;
+          const dateEndB = b.date_end;
+
+          if (dateEndA > dateEndB) {
+            return 1;
+          }
+
+          if (dateEndA < dateEndB) {
+            return -1;
+          }
+
+          return 0;
+        }
+
         if (titleA > titleB) {
           return 1;
         }
 
-        if (titleA < titleB) {
-          return -1;
-        }
+        return -1;
 
-        return 0;
       });
       arrayId.value = products.value.map(item => item.id);
       break;
     case 'oldest':
       products.value.sort((a, b) => {
-        const titleA= a.date_end;
-        const titleB= b.date_end;
+        const titleA= a.date_start;
+        const titleB= b.date_start;
+
+        if (!titleA) {
+          return 1;
+        }
+
+        if (!titleB) {
+          return -1;
+        }
+
+        if (titleA === titleB) {
+          const dateEndA = a.date_end;
+          const dateEndB = b.date_end;
+
+          if (dateEndA > dateEndB) {
+            return -1;
+          }
+
+          if (dateEndA < dateEndB) {
+            return 1;
+          }
+
+          return 0;
+        }
 
         if (titleA > titleB) {
           return -1;
         }
 
-        if (titleA < titleB) {
-          return 1;
-        }
-
-        return 0;
+        return 1;
       });
       arrayId.value = products.value.map(item => item.id);
       break;
@@ -356,44 +395,51 @@ watch(searchType, (newValue, oldValue) => {
   }
 });
 
-watch(searchProduct, (newValue, oldValue) => {
+watch(searchProduct, async (newValue, oldValue) => {
   if (newValue === '') {
-    axios.get('/products')
-      .then(response => {
-        products.value = response;
-        arrayId.value = response.map(element => element.id);
-      })
-      .catch(
-        error => {
-          console.log(error);
-        },
-      );
-    //sold,pre,sold
-    products.value.forEach(product => {
-      const array = variants.value.filter(variant => variant.product_id === product.id);
-
-      console.log(array);
-      array.forEach(variant => {
-        product.stock += variant.stock;
-        product.preorder += variant.preorder;
-        product.sold += variant.sold;
-      });
-      product.price = array[0].price;
-    });
+    fetchAllInfoProduct();
   } else {
-    axios.get(`/products/search/name/${newValue}`)
+    await axios.get(`/products/search/name/${newValue}`)
       .then(response => {
         products.value = response;
-        arrayId.value = response.map(element => element.id);
+        console.log(response);
+        const options = {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+        };
+
+        arrayId.value = response.map((element, index) => {
+          if (element.date_start && element.date_end) {
+            const startDateObject = new Date(element.date_start);
+            const endDateObject = new Date(element.date_end);
+
+            products.value[index].date_start = startDateObject.toLocaleDateString('en-US', options);
+            products.value[index].date_end = endDateObject.toLocaleDateString('en-US', options);
+          }
+
+          products.value[index].stock = 0;
+          products.value[index].preorder = 0;
+          products.value[index].sold = 0;
+
+          return element.id;
+        });
       })
       .catch(error => {
         console.log(error);
       });
-    //sold,pre,sold
+  //get all variants
+    await axios.get('/variants')
+      .then(response => {
+        variants.value = response;
+      })
+      .catch(error => {
+        console.log(error);
+      });
+  //sold,pre,sold for product
     products.value.forEach(product => {
       const array = variants.value.filter(variant => variant.product_id === product.id);
 
-      console.log(array);
       array.forEach(variant => {
         product.stock += variant.stock;
         product.preorder += variant.preorder;

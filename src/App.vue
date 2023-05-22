@@ -44,7 +44,6 @@ const initialize = async () => {
 };
 
 initialize();
-console.log(authStore.status);
 
 const isAppReady = computed<boolean>(() => authStore.status === AUTH_STATUS.success);
 const isAppError = computed<boolean>(() => authStore.status === AUTH_STATUS.error);
