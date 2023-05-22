@@ -129,18 +129,27 @@ const handleMonthChange = ({ month, year }) => {
 ///end Date
 
 //Products Recommended
+
+let handler = null;
+
 watch(productSearchName, (newValue, oldValue) => {
-  if (newValue === '') {
+  console.log(newValue);
+
+  if (!newValue.trim()) {
+    clearTimeout(handler);
     productListRecommend.value = {};
   } else {
-    console.log(newValue);
-    axios.get(`/products/search/name/${newValue}`)
-      .then(response => {
-        productListRecommend.value = response;
-      })
-      .catch(error => {
-        console.log(error);
-      });
+    clearTimeout(handler);
+
+    handler = setTimeout(() => {
+      axios.get(`/products/search/name/${newValue}`)
+        .then(response => {
+          productListRecommend.value = response;
+        })
+        .catch(error => {
+          console.log(error);
+        });
+    }, 500);
   }
 });
 

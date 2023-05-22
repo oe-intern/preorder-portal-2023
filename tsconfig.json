@@ -21,6 +21,6 @@
       "@volar/vue-language-plugin-pug"
     ]
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"],
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue", "src/utils/index.js", "src/utils/useDebounce.js"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

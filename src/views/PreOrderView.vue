@@ -92,6 +92,35 @@ const isChecked = ref(false);
 const searchPreorder = ref('');
 const sortType = ref('');
 
+const fetchPreorder = newValue => {
+  if (newValue) {
+    axios.get(`/preorders/${newValue}`)
+      .then(response => {
+        preOrders.value = response;
+        preOrders.value.forEach((element, index) => {
+          preOrders.value[index].total = element.variants.price * element.quantity;
+        });
+        arrayId.value = response.map(element => element.id);
+      })
+      .catch(error => {
+        console.log(error);
+      });
+  } else {
+    axios.get('/preorders')
+      .then(response => {
+        preOrders.value = response;
+        preOrders.value.forEach((element, index) => {
+          preOrders.value[index].total = element.variants.price * element.quantity;
+        });
+        arrayId.value = response.map(element => element.id);
+      })
+      .catch(error => {
+        console.log(error);
+      });
+  }
+
+};
+
 const handleToggleCheckAll = e => {
   if (isCheckedAll.value) {
     preOrderCheck.value = arrayId.value;
@@ -115,33 +144,18 @@ const handleCheckbox = e => {
   }
 };
 
-watch(searchPreorder.value, (newValue, oldValue) => {
+let handler = null;
+
+watch(searchPreorder, (newValue, oldValue) => {
   if (newValue === '') {
-    axios.get('/preorders')
-      .then(response => {
-        preOrders.value = response;
-        preOrders.value.forEach((element, index) => {
-          preOrders.value[index].total = element.variants.price * element.quantity;
-        });
-        arrayId.value = response.map(element => element.id);
-      })
-      .catch(
-        error => {
-          console.log(error);
-        },
-      );
+    clearTimeout(handler);
+    fetchPreorder();
   } else {
-    axios.get(`/preorders/${newValue}`)
-      .then(response => {
-        preOrders.value = response;
-        preOrders.value.forEach((element, index) => {
-          preOrders.value[index].total = element.variants.price * element.quantity;
-        });
-        arrayId.value = response.map(element => element.id);
-      })
-      .catch(error => {
-        console.log(error);
-      });
+    clearTimeout(handler);
+
+    handler = setTimeout(() => {
+      fetchPreorder(newValue);
+    }, 500);
   }
 });
 

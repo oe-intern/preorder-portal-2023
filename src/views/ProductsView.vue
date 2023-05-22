@@ -141,6 +141,57 @@ const variantsArray = ref([]);
 const searchProduct = ref('');
 const isChecked = ref(false);
 
+const fetchDataSearch = async newValue => {
+  await axios.get(`/products/search/name/${newValue}`)
+    .then(response => {
+      products.value = response;
+      console.log(response);
+      const options = {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      };
+
+      arrayId.value = response.map((element, index) => {
+        if (element.date_start && element.date_end) {
+          const startDateObject = new Date(element.date_start);
+          const endDateObject = new Date(element.date_end);
+
+          products.value[index].date_start = startDateObject.toLocaleDateString('en-US', options);
+          products.value[index].date_end = endDateObject.toLocaleDateString('en-US', options);
+        }
+
+        products.value[index].stock = 0;
+        products.value[index].preorder = 0;
+        products.value[index].sold = 0;
+
+        return element.id;
+      });
+    })
+    .catch(error => {
+      console.log(error);
+    });
+  //get all variants
+  await axios.get('/variants')
+    .then(response => {
+      variants.value = response;
+    })
+    .catch(error => {
+      console.log(error);
+    });
+  //sold,pre,sold for product
+  products.value.forEach(product => {
+    const array = variants.value.filter(variant => variant.product_id === product.id);
+
+    array.forEach(variant => {
+      product.stock += variant.stock;
+      product.preorder += variant.preorder;
+      product.sold += variant.sold;
+    });
+    product.price = array[0].price;
+  });
+};
+
 const fetchAllInfoProduct = async () => {
   ///get all products
   await axios.get('/products')
@@ -395,58 +446,17 @@ watch(searchType, (newValue, oldValue) => {
   }
 });
 
-watch(searchProduct, async (newValue, oldValue) => {
-  if (newValue === '') {
+let handler = null;
+
+watch(searchProduct, (newValue, oldValue) => {
+  if (!newValue.trim()) {
+    clearTimeout(handler);
     fetchAllInfoProduct();
   } else {
-    await axios.get(`/products/search/name/${newValue}`)
-      .then(response => {
-        products.value = response;
-        console.log(response);
-        const options = {
-          day: 'numeric',
-          month: 'short',
-          year: 'numeric',
-        };
-
-        arrayId.value = response.map((element, index) => {
-          if (element.date_start && element.date_end) {
-            const startDateObject = new Date(element.date_start);
-            const endDateObject = new Date(element.date_end);
-
-            products.value[index].date_start = startDateObject.toLocaleDateString('en-US', options);
-            products.value[index].date_end = endDateObject.toLocaleDateString('en-US', options);
-          }
-
-          products.value[index].stock = 0;
-          products.value[index].preorder = 0;
-          products.value[index].sold = 0;
-
-          return element.id;
-        });
-      })
-      .catch(error => {
-        console.log(error);
-      });
-  //get all variants
-    await axios.get('/variants')
-      .then(response => {
-        variants.value = response;
-      })
-      .catch(error => {
-        console.log(error);
-      });
-  //sold,pre,sold for product
-    products.value.forEach(product => {
-      const array = variants.value.filter(variant => variant.product_id === product.id);
-
-      array.forEach(variant => {
-        product.stock += variant.stock;
-        product.preorder += variant.preorder;
-        product.sold += variant.sold;
-      });
-      product.price = array[0].price;
-    });
+    clearTimeout(handler);
+    handler = setTimeout(() => {
+      fetchDataSearch(newValue);
+    }, 500);
   }
 });
 
