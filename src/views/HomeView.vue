@@ -79,16 +79,6 @@ const chart = ref(null);
 const router = useRouter();
 //get now date
 
-(async () => {
-  await axios.post('/products')
-    .then(response => {
-      console.log(response);
-    })
-    .catch(error => {
-      console.log(error);
-    });
-})();
-
 const today = new Date();
 const sevenDayAgo = new Date();
 
@@ -118,64 +108,6 @@ const bestSellerProducts = ref([]);
 const worstSellerProducts = ref([]);
 const preorders = ref([]);
 
-axios.get('/products')
-  .then(response => {
-    numberProduct.value = response.filter(element => element.status === 1).length;
-  })
-  .catch(error => {
-    console.log(error);
-  });
-
-axios.get('/preorders')
-  .then(response => {
-    preorders.value = response;
-
-    return response;
-  })
-  .then(response => {
-    response.forEach(element => {
-      if (element.create_at >= sevenDayAgo) {
-        const disDay = element.create_at.getDate() - sevenDayAgo.getDate();
-
-        switch (disDay) {
-          case 0:
-            dataChart[6]+=1;
-            maxChart.value = Math.max(dataChart[6], maxChart);
-            break;
-          case 1:
-            dataChart[5]+=1;
-            maxChart.value = Math.max(dataChart[5], maxChart);
-            break;
-          case 2:
-            dataChart[4]+=1;
-            maxChart.value = Math.max(dataChart[4], maxChart);
-            break;
-          case 3:
-            dataChart[3]+=1;
-            maxChart.value = Math.max(dataChart[3], maxChart);
-            break;
-          case 4:
-            dataChart[2]+=1;
-            maxChart.value = Math.max(dataChart[2], maxChart);
-            break;
-          case 5:
-            dataChart[1]+=1;
-            maxChart.value = Math.max(dataChart[1], maxChart);
-            break;
-          case 6:
-            dataChart[0]+=1;
-            maxChart.value = Math.max(dataChart[0], maxChart);
-            break;
-          default:
-            break;
-        }
-      }
-    });
-  })
-  .catch(error => {
-    console.log(error);
-  });
-
 const showProduct = id => {
   router.push({
     name: 'detailsProduct',
@@ -203,9 +135,76 @@ onMounted(async () => {
     options: { maintainAspectRatio: false },
   });
 
+  await axios.post('/products')
+    .then(response => {
+      console.log(response);
+    })
+    .catch(error => {
+      console.log(error);
+    });
+
+  axios.get('/products')
+    .then(response => {
+      numberProduct.value = response.filter(element => element.status === 1).length;
+    })
+    .catch(error => {
+      console.log(error);
+    });
+
+  axios.get('/preorders')
+    .then(response => {
+      preorders.value = response;
+
+      return response;
+    })
+    .then(response => {
+      response.forEach(element => {
+        if (element.create_at >= sevenDayAgo) {
+          const disDay = element.create_at.getDate() - sevenDayAgo.getDate();
+
+          switch (disDay) {
+            case 0:
+              dataChart[6]+=1;
+              maxChart.value = Math.max(dataChart[6], maxChart);
+              break;
+            case 1:
+              dataChart[5]+=1;
+              maxChart.value = Math.max(dataChart[5], maxChart);
+              break;
+            case 2:
+              dataChart[4]+=1;
+              maxChart.value = Math.max(dataChart[4], maxChart);
+              break;
+            case 3:
+              dataChart[3]+=1;
+              maxChart.value = Math.max(dataChart[3], maxChart);
+              break;
+            case 4:
+              dataChart[2]+=1;
+              maxChart.value = Math.max(dataChart[2], maxChart);
+              break;
+            case 5:
+              dataChart[1]+=1;
+              maxChart.value = Math.max(dataChart[1], maxChart);
+              break;
+            case 6:
+              dataChart[0]+=1;
+              maxChart.value = Math.max(dataChart[0], maxChart);
+              break;
+            default:
+              break;
+          }
+        }
+      });
+    })
+    .catch(error => {
+      console.log(error);
+    });
+
   await axios.get('/products/bestseller')
     .then(response => {
       bestSellerProducts.value = response;
+      console.log(response);
     })
     .catch(error => {
       console.log(error);
