@@ -6,7 +6,7 @@
     h1.success-text You are Successfully
   .header-pro-order
     .title-header
-      span Product pro-order List
+      span Product Preorder List
     .content-header
       button.btn-fulfill(:class="{'no-blur' : isChecked}" @click="isChecked? fulFill() : isChecked=false" ) Ready to FulFill
       button(@click="handelAddNewProduct").btn-fulfill.no-blur Add new product
@@ -19,7 +19,7 @@
   id="searchProduct",
   v-model="searchProduct"
   type="text",
-  placeholder="Filter pro-orders").search-input
+  placeholder="Filter Products By Name").search-input
     .pro-order-sort
       .sort-by
         label( for="sort-by-list" ).title-sort-by Sort by

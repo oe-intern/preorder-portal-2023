@@ -70,6 +70,8 @@
 <script setup>
 import Chart, { elements } from 'chart.js/auto';
 import { useRouter } from 'vue-router';
+import { AUTH_STATUS } from '@/configs';
+import { useAuthStore } from '@/stores';
 import {
   ref, onMounted, inject,
 } from 'vue';
@@ -77,6 +79,7 @@ import {
 const axios = inject('axios');
 const chart = ref(null);
 const router = useRouter();
+const authStore = useAuthStore();
 //get now date
 
 const today = new Date();
@@ -252,6 +255,7 @@ onMounted(async () => {
       }
     }),
   );
+
 });
 </script>
 

@@ -36,17 +36,19 @@ const props = ref();
 
 const authStore = useAuthStore();
 
+let sessionToken = null;
+
 const initialize = async () => {
-  const sessionToken = await getSessionToken(app);
+  sessionToken = await getSessionToken(app);
 
   authStore.loadedToken(sessionToken);
 
-  if (sessionToken) {
-    authStore.status = AUTH_STATUS.success;
-  }
-
   setTimeout(initialize, 60000);
 };
+
+if (sessionToken) {
+  authStore.status = AUTH_STATUS.success;
+}
 
 initialize();
 

@@ -142,10 +142,14 @@ const fetchAllData = () => {
   axios.get(`/products/search/id/${props.id}`)
     .then(response => {
       productDetails.value = response;
-      selectedDate.value.start = new Date(response.date_start);
-      selectedDate.value.end = new Date(response.date_end);
-      pickerView.month = selectedDate.value.start.getMonth();
-      pickerView.year = selectedDate.value.start.getFullYear();
+
+      if (response.date_start && response.date_end) {
+        selectedDate.value.start = new Date(response.date_start);
+        selectedDate.value.end = new Date(response.date_end);
+        pickerView.month = selectedDate.value.start.getMonth();
+        pickerView.year = selectedDate.value.start.getFullYear();
+      }
+
       const dateObject = new Date(productDetails.value.created_at);
       const startDateObject = new Date(productDetails.value.date_start);
       const endDateObject = new Date(productDetails.value.date_end);

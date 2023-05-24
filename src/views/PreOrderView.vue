@@ -6,7 +6,7 @@
     h1.success-text You are Successfully
   .header-pre-order
     .title-header
-      span Pre-orders
+      span Preorders
     .content-header
       button.btn-fulfill(:class="{'no-blur' : isChecked}" @click="isChecked? handelShipping() : isChecked=false")  Ready to Shipping
   .pre-order-task-bar
@@ -18,7 +18,7 @@
 id="searchProduct",
 v-model="searchPreorder",
 type="text",
-placeholder="Search preorder by customerName").search-input
+placeholder="Search Preorder By Customer Name").search-input
     .pre-order-sort
       .sort-by
         label( for="sort-by-list" ).title-sort-by Sort by
@@ -42,7 +42,7 @@ placeholder="Search preorder by customerName").search-input
   @change="handleToggleCheckAll").pre-check-box#pre-check-all
           th(colspan="1").pre-reference.pre-header-item Reference#
           th(colspan="1").pre-customer.pre-header-item Customer
-          th(colspan="1").pro-status.pro-header-item
+          th(colspan="1").pro-status.pre-header-item
             div.status-cover
               span Status
               InfoMinor.status-icon
@@ -50,34 +50,35 @@ placeholder="Search preorder by customerName").search-input
           th(colspan="1").pre-quantity.pre-header-item Quantity
           th(colspan="1").pre-total.pre-header-item Total
       tbody
-        tr.table-list(v-for="preOrder in preOrders" :key="preOrder.id")
+        tr.table-list(v-for="preorder in preorders" :key="preorder.id")
           td(colspan="1").pre-check.pre-item
             label( for="all").pre-check-box
               input(
-  :id="preOrder.id",
+  :id="preorder.id",
   :ref="checkItem",
-  v-model="preOrderCheck",
-  :value="preOrder.id",
+  v-model="preorderCheck",
+  :value="preorder.id",
   type="checkbox",
   @change="handleCheckbox",).pre-check-box
           td.product-refer.pre-item
             ul.refer-list
               //- li.refer-image-cover
-              //-   img(:src="preOrder.variant.image_src!== 'no_image'? preOrder.variant.image_src : 'https://static.vecteezy.com/system/resources/thumbnails/008/015/799/small/illustration-of-no-image-available-icon-template-for-no-image-or-picture-coming-soon-free-vector.jpg' ").div-image
-              li.refer-name
-                span.refer-type {{ preOrder.variant.title_var }}
-                span.refer-price {{ preOrder.variant.price }}$
+              //-   img(:src="preorder.variant.image_src!== 'no_image'? preorder.variant.image_src : 'https://static.vecteezy.com/system/resources/thumbnails/008/015/799/small/illustration-of-no-image-available-icon-template-for-no-image-or-picture-coming-soon-free-vector.jpg' ").div-image
+              li.refer-name {{ preorder.variant.title_var }}
+              li.refer-price {{ preorder.variant.price }}$
           td.product-customer.pre-item
-            router-link(to="#")
-              ul
-                li.customer-name {{ preOrder.customer.name }}
-                li.customer-email {{ preOrder.customer.email }} / {{ preOder.customer.phone }}
-                li.customer-location {{ preOrder.customer.address }}
+            ul.customer-list
+              li.customer-item
+                span.customer-name {{ preorder.customer.name }}
+              li.customer-item
+                span.customer-phone {{ preorder.customer.phone }}
+                span.customer-email {{ preorder.customer.email }}
+              li.customer-location {{ preorder.customer.address }}
           td.pre-item
-            span(:class="preOrder.status=== 1 ? 'active' : 'inactive' ") {{ preOrder.status=== 1 ? 'complete' : 'pending' }}
-          td.product-date.pre-item {{ preOrder.created_at }}
-          td.product-quantity.pre-item {{ preOrder.quantity }}
-          td.product-total.pre-item {{ preOrder.total }}$
+            span(:class="preorder.status=== 1 ? 'active' : 'inactive' ") {{ preorder.status=== 1 ? 'complete' : 'pending' }}
+          td.product-date.pre-item {{ preorder.created_at }}
+          td.product-quantity.pre-item {{ preorder.quantity }}
+          td.product-total.pre-item {{ preorder.total }}$
 </template>
 
 <script setup>
@@ -92,10 +93,10 @@ const axios = inject('axios');
 const router = useRouter();
 const isSuccess = ref(false);
 const errors = ref({});
-const preOrderCheck = ref([]);
+const preorderCheck = ref([]);
 const arrayId = ref([]);
 const isCheckedAll = ref(false);
-const preOrders = ref([]);
+const preorders = ref([]);
 const isChecked = ref(false);
 const searchPreorder = ref('');
 const sortType = ref('');
@@ -104,9 +105,9 @@ const fetchPreorder = newValue => {
   if (newValue) {
     axios.get(`/preorders/${newValue}`)
       .then(response => {
-        preOrders.value = response;
-        preOrders.value.forEach((element, index) => {
-          preOrders.value[index].total = parseFloat(element.variant.price) * element.quantity;
+        preorders.value = response;
+        preorders.value.forEach((element, index) => {
+          preorders.value[index].total = parseFloat(element.variant.price) * element.quantity;
         });
         arrayId.value = response.map(element => element.id);
       })
@@ -116,9 +117,9 @@ const fetchPreorder = newValue => {
   } else {
     axios.get('/preorders')
       .then(response => {
-        preOrders.value = response;
-        preOrders.value.forEach((element, index) => {
-          preOrders.value[index].total = parseFloat(element.variant.price) * element.quantity;
+        preorders.value = response;
+        preorders.value.forEach((element, index) => {
+          preorders.value[index].total = parseFloat(element.variant.price) * element.quantity;
         });
         arrayId.value = response.map(element => element.id);
       })
@@ -131,19 +132,19 @@ const fetchPreorder = newValue => {
 
 const handleToggleCheckAll = e => {
   if (isCheckedAll.value) {
-    preOrderCheck.value = arrayId.value;
+    preorderCheck.value = arrayId.value;
     isChecked.value = true;
   } else {
-    preOrderCheck.value = [];
+    preorderCheck.value = [];
     isChecked.value = false;
   }
 };
 
 const handleCheckbox = e => {
-  if (preOrderCheck.value.length === arrayId.value.length) {
+  if (preorderCheck.value.length === arrayId.value.length) {
     isCheckedAll.value = true;
     isChecked.value = true;
-  } else if (preOrderCheck.value.length >0) {
+  } else if (preorderCheck.value.length >0) {
     isChecked.value = true;
     isCheckedAll.value = false;
   } else {
@@ -170,7 +171,7 @@ watch(searchPreorder, (newValue, oldValue) => {
 watch(sortType.value, (newValue, oldValue) => {
   switch (newValue) {
     case 'newest':
-      preOrders.value.sort((a, b) => {
+      preorders.value.sort((a, b) => {
         const x = a.created_at;
         const y = b.created_at;
 
@@ -184,10 +185,10 @@ watch(sortType.value, (newValue, oldValue) => {
 
         return 0;
       });
-      arrayId.value = preOrders.value.map(element => element.id);
+      arrayId.value = preorders.value.map(element => element.id);
       break;
     case 'oldest':
-      preOrders.value.sort((a, b) => {
+      preorders.value.sort((a, b) => {
         const x = a.created_at;
         const y = b.created_at;
 
@@ -201,10 +202,10 @@ watch(sortType.value, (newValue, oldValue) => {
 
         return 0;
       });
-      arrayId.value = preOrders.value.map(element => element.id);
+      arrayId.value = preorders.value.map(element => element.id);
       break;
     case 'the most expensive':
-      preOrders.value.sort((a, b) => {
+      preorders.value.sort((a, b) => {
         const x = a.total;
         const y = b.total;
 
@@ -218,10 +219,10 @@ watch(sortType.value, (newValue, oldValue) => {
 
         return 0;
       });
-      arrayId.value = preOrders.value.map(element => element.id);
+      arrayId.value = preorders.value.map(element => element.id);
       break;
     case 'cheapest':
-      preOrders.value.sort((a, b) => {
+      preorders.value.sort((a, b) => {
         const x = a.total;
         const y = b.total;
 
@@ -235,7 +236,7 @@ watch(sortType.value, (newValue, oldValue) => {
 
         return 0;
       });
-      arrayId.value = preOrders.value.map(element => element.id);
+      arrayId.value = preorders.value.map(element => element.id);
       break;
     default:
       break;
@@ -245,21 +246,21 @@ watch(sortType.value, (newValue, oldValue) => {
 onMounted(() => {
   axios.get('/preorders')
     .then(response => {
-      preOrders.value = response;
+      preorders.value = response;
       const options = {
         day: 'numeric',
         month: 'short',
         year: 'numeric',
       };
 
-      preOrders.value.forEach((element, index) => {
-        preOrders.value[index].total = parseFloat(element.variant.price) * element.quantity;
+      preorders.value.forEach((element, index) => {
+        preorders.value[index].total = parseFloat(element.variant.price) * element.quantity;
 
         const createAt = new Date(element.created_at);
 
-        preOrders.value[index].created_at = createAt.toLocaleDateString('en-US', options);
+        preorders.value[index].created_at = createAt.toLocaleDateString('en-US', options);
       });
-      console.log(preOrders.value);
+      console.log(preorders.value);
       arrayId.value = response.map(element => element.id);
     })
     .catch(error => {
@@ -268,8 +269,8 @@ onMounted(() => {
 });
 
 const handelShipping= () => {
-  console.log(preOrderCheck.value);
-  axios.post('preorder/shipping', preOrderCheck.value)
+  console.log(preorderCheck.value);
+  axios.post('preorder/shipping', preorderCheck.value)
     .then(response => {
       console.log(response);
       isSuccess.value = true;
@@ -289,6 +290,46 @@ const handelShipping= () => {
   padding-top: 40px;
   .pre-check{
     text-align: center!important;;
+  }
+  .customer-location{
+    display: block;
+    width: 100%;
+    text-align: center;
+  }
+
+  .customer-list{
+    padding: 0;
+    justify-content: center;
+    display: flex;
+    flex-direction: row;
+    min-width: 200px;
+    line-height: 2;
+    .customer-item{
+      text-align: center;
+      justify-content: center;
+      display: flex;
+      flex-direction: column;
+      padding-left: 20px;
+    }
+    .customer-name{
+      color: $primary-color;
+      font-weight: 600;
+      font-size: 1.25rem;
+    }
+  }
+  .status-cover{
+    display: flex;
+    align-items: center;
+    position: relative;
+    .status-icon{
+    width: 20px;
+    height: 20px;
+    margin-left: 4px;
+    position: absolute;
+    top: calc(50% - 1px);
+    transform: translateY(-50%);
+    left: 45px;
+    }
   }
   .header-pre-order{
     display: flex;
@@ -430,7 +471,7 @@ const handelShipping= () => {
           min-width: 50px;
         }
         .pre-item{
-          padding: 0 12px;
+          padding: 12px 12px;
           text-align: left;
           line-height: 1.5;
           font-size: 0.875rem;
@@ -438,9 +479,8 @@ const handelShipping= () => {
           .refer-list{
             padding: 0;
             display: flex;
-            flex-direction: row;
+            flex-direction: column;
             align-items: center;
-            min-width: 200px;
             .refer-image-cover{
                 display: block;
                 .div-image{
@@ -450,15 +490,12 @@ const handelShipping= () => {
             }
             }
             .refer-name{
-              padding-left: 12px;
-              display: flex;
-              flex-direction: column;
-              align-items: center;
+              font-size: 1.25rem;
             }
           }
         }
         .refer-price, .product-total{
-          color: red;
+          color: $primary-color;
           font-weight: 600;
         }
       }
