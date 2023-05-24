@@ -254,11 +254,11 @@ onMounted(() => {
 
       preOrders.value.forEach((element, index) => {
         preOrders.value[index].total = parseFloat(element.variant.price) * element.quantity;
+
+        const createAt = new Date(element.created_at);
+
+        preOrders.value[index].created_at = createAt.toLocaleDateString('en-US', options);
       });
-
-      const createAt = new Date(response.created_at);
-
-      preOrders.value.created_at = createAt.toLocaleDateString('en-US', options);
       console.log(preOrders.value);
       arrayId.value = response.map(element => element.id);
     })
