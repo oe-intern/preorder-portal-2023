@@ -106,7 +106,7 @@ const fetchPreorder = newValue => {
       .then(response => {
         preOrders.value = response;
         preOrders.value.forEach((element, index) => {
-          preOrders.value[index].total = element.variants.price * element.quantity;
+          preOrders.value[index].total = parseFloat(element.variant.price) * element.quantity;
         });
         arrayId.value = response.map(element => element.id);
       })
@@ -118,7 +118,7 @@ const fetchPreorder = newValue => {
       .then(response => {
         preOrders.value = response;
         preOrders.value.forEach((element, index) => {
-          preOrders.value[index].total = element.variants.price * element.quantity;
+          preOrders.value[index].total = parseFloat(element.variant.price) * element.quantity;
         });
         arrayId.value = response.map(element => element.id);
       })
@@ -253,7 +253,7 @@ onMounted(() => {
       };
 
       preOrders.value.forEach((element, index) => {
-        preOrders.value[index].total = parseFloat(element.variants.price) * element.quantity;
+        preOrders.value[index].total = parseFloat(element.variant.price) * element.quantity;
       });
 
       const createAt = new Date(response.created_at);
