@@ -7,8 +7,8 @@
   .header-pre-order
     .title-header
       span Pre-orders
-    .content-header(:class="{'no-blur' : isChecked}")
-      button.btn-fulfill(@click="handelShipping")  Ready to Shipping
+    .content-header
+      button.btn-fulfill(:class="{'no-blur' : isChecked}" @click="isChecked? handelShipping() : isChecked=false")  Ready to Shipping
   .pre-order-task-bar
     .pre-order-search
       label(for="searchProduct").search-icon
@@ -23,6 +23,9 @@ placeholder="Search preorder by customerName").search-input
       .sort-by
         label( for="sort-by-list" ).title-sort-by Sort by
         select(id="sort-by-list" v-mode="sortType" ).sort-by-list
+          option.sort-by-item(
+            value=""
+            hidden) Chose the type
           option(value="newest").sort-by-item Newest first
           option(value="oldest").sort-by-item Oldest first
           option(value="the most expensive").sort-by-item The most expensive first
@@ -39,6 +42,10 @@ placeholder="Search preorder by customerName").search-input
   @change="handleToggleCheckAll").pre-check-box#pre-check-all
           th(colspan="1").pre-reference.pre-header-item Reference#
           th(colspan="1").pre-customer.pre-header-item Customer
+          th(colspan="1").pro-status.pro-header-item
+            div.status-cover
+              span Status
+              InfoMinor.status-icon
           th(colspan="1").pre-date.pre-header-item Date
           th(colspan="1").pre-quantity.pre-header-item Quantity
           th(colspan="1").pre-total.pre-header-item Total
@@ -55,21 +62,22 @@ placeholder="Search preorder by customerName").search-input
   @change="handleCheckbox",).pre-check-box
           td.product-refer.pre-item
             ul.refer-list
-              li.refer-image-cover
-                img(:src="preOrder.variant.image_src!== 'no_image'? preOrder.variant.image_src : 'https://static.vecteezy.com/system/resources/thumbnails/008/015/799/small/illustration-of-no-image-available-icon-template-for-no-image-or-picture-coming-soon-free-vector.jpg' ").div-image
+              //- li.refer-image-cover
+              //-   img(:src="preOrder.variant.image_src!== 'no_image'? preOrder.variant.image_src : 'https://static.vecteezy.com/system/resources/thumbnails/008/015/799/small/illustration-of-no-image-available-icon-template-for-no-image-or-picture-coming-soon-free-vector.jpg' ").div-image
               li.refer-name
-                span.product-name {{ preOrder.variant.name }}
                 span.refer-type {{ preOrder.variant.title_var }}
-                span.refer-price &eth;{{ preOrder.variant.price }}
+                span.refer-price {{ preOrder.variant.price }}$
           td.product-customer.pre-item
             router-link(to="#")
               ul
                 li.customer-name {{ preOrder.customer.name }}
-                li.customer-email {{ preOrder.customer.email || preOder.customer.phone }}
+                li.customer-email {{ preOrder.customer.email }} - {{ preOder.customer.phone }}
                 li.customer-location {{ preOrder.customer.address }}
-          td.product-date.pre-item {{ preOrder.create_at }}
+          td.pre-item
+            span(:class="product.status=== 1 ? 'active' : 'inactive' ") {{ product.status=== 1 ? 'active' : 'inactive' }}
+          td.product-date.pre-item {{ preOrder.created_at }}
           td.product-quantity.pre-item {{ preOrder.quantity }}
-          td.product-total.pre-item &eth;{{ preOrder.total }}
+          td.product-total.pre-item {{ preOrder.total }}$
 </template>
 
 <script setup>
@@ -134,13 +142,13 @@ const handleToggleCheckAll = e => {
 const handleCheckbox = e => {
   if (preOrderCheck.value.length === arrayId.value.length) {
     isCheckedAll.value = true;
-    isChecked.value =true;
+    isChecked.value = true;
   } else if (preOrderCheck.value.length >0) {
-    isChecked.value =true;
+    isChecked.value = true;
     isCheckedAll.value = false;
   } else {
-    isChecked.value =false;
     isCheckedAll.value = false;
+    isChecked.value = false;
   }
 };
 
@@ -163,8 +171,8 @@ watch(sortType.value, (newValue, oldValue) => {
   switch (newValue) {
     case 'newest':
       preOrders.value.sort((a, b) => {
-        const x = a.create_at;
-        const y = b.create_at;
+        const x = a.created_at;
+        const y = b.created_at;
 
         if (x>y) {
           return 1;
@@ -180,8 +188,8 @@ watch(sortType.value, (newValue, oldValue) => {
       break;
     case 'oldest':
       preOrders.value.sort((a, b) => {
-        const x = a.create_at;
-        const y = b.create_at;
+        const x = a.created_at;
+        const y = b.created_at;
 
         if (x>y) {
           return -1;
@@ -238,9 +246,19 @@ onMounted(() => {
   axios.get('/preorders')
     .then(response => {
       preOrders.value = response;
+      const options = {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      };
+
       preOrders.value.forEach((element, index) => {
-        preOrders.value[index].total = element.variants.price * element.quantity;
+        preOrders.value[index].total = parseFloat(element.variants.price) * element.quantity;
       });
+
+      const createAt = new Date(response.created_at);
+
+      preOrders.value.created_at = createAt.toLocaleDateString('en-US', options);
       console.log(preOrders.value);
       arrayId.value = response.map(element => element.id);
     })

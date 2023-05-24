@@ -116,7 +116,6 @@ import SearchMajor from '@icons/SearchMajor.svg';
 import {
   inject, ref, onMounted, watch,
 } from 'vue';
-import { elements } from 'chart.js';
 
 const productCheck = ref([]);
 const router = useRouter();
@@ -183,6 +182,7 @@ const fetchDataSearch = async newValue => {
   products.value.forEach(product => {
     const array = variants.value.filter(variant => variant.product_id === product.id);
 
+    product.variants = array;
     array.forEach(variant => {
       product.stock += variant.stock;
       product.preorder += variant.preorder;
@@ -204,7 +204,22 @@ const fetchAllInfoProduct = async () => {
         year: 'numeric',
       };
 
-      arrayId.value = response.map((element, index) => {
+      products.value.sort((a, b) => {
+        const titleA= a.date_start;
+        const titleB= b.date_start;
+
+        if (!titleA) {
+          return 1;
+        }
+
+        if (!titleB) {
+          return -1;
+        }
+
+        return 0;
+      });
+
+      arrayId.value = products.value.map((element, index) => {
         if (element.date_start && element.date_end) {
           const startDateObject = new Date(element.date_start);
           const endDateObject = new Date(element.date_end);
@@ -237,6 +252,7 @@ const fetchAllInfoProduct = async () => {
   products.value.forEach(product => {
     const array = variants.value.filter(variant => variant.product_id === product.id);
 
+    product.variants = array;
     array.forEach(variant => {
       product.stock += variant.stock;
       product.preorder += variant.preorder;
@@ -466,7 +482,31 @@ onMounted(() => {
 });
 
 const fulFill = () => {
-  console.log(productCheck.value);
+
+  const arraySubmit = products.value.map((product, index) => {
+    if (productCheck.value.includes(product.id)) {
+      return product.variants;
+    }
+
+    return null;
+  });
+
+  console.log(arraySubmit);
+
+  arraySubmit.filter(element => !!element);
+
+  console.log(arraySubmit);
+
+  arraySubmit.forEach((variants, index) => {
+    arraySubmit[index] = variants.map(variant => {
+      return {
+        id: variant.id,
+        stock: variant.stock,
+      };
+    });
+  });
+  console.log(arraySubmit);
+
   axios.post('/products/fulfill', productCheck.value)
     .then(() => {
       isSuccess.value = true;

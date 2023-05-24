@@ -33,6 +33,7 @@
             .list-suggested-product(v-if="isShowRecommended")
               .product-choice(
                 v-for="productRecommend in productListRecommend"
+                v-show="productRecommend.status !== 1"
                 :key="productRecommend.id"
                 @click="choseProduct(productRecommend)"
                 @mousedown="disableBlur = true"
@@ -84,6 +85,7 @@ import { DatePicker } from '@ownego/polaris-vue';
 import {
   ref, reactive, onMounted, inject, watch,
 } from 'vue';
+import { elements } from 'chart.js';
 
 const router = useRouter();
 const axios = inject('axios');
@@ -112,13 +114,13 @@ const monthNow = today.getMonth();
 const yearNow = today.getFullYear();
 
 const selectedDate = ref({
-  start: productChoice.value.date_start|| today,
-  end: productChoice.value.date_end || today,
+  start: today,
+  end: today,
 });
 
 const pickerView = reactive({
-  month: selectedDate.value.start.getMonth(),
-  year: selectedDate.value.end.getFullYear(),
+  month: monthNow,
+  year: yearNow,
 });
 
 const handleMonthChange = ({ month, year }) => {
@@ -133,8 +135,6 @@ const handleMonthChange = ({ month, year }) => {
 let handler = null;
 
 watch(productSearchName, (newValue, oldValue) => {
-  console.log(newValue);
-
   if (!newValue.trim()) {
     clearTimeout(handler);
     productListRecommend.value = {};
@@ -168,8 +168,8 @@ const resetField = () => {
   productSearchName.value = '';
   productChoice.value = {};
   selectedDate.value = {
-    start: productChoice.value.date_start || today,
-    end: productChoice.value.date_end || today,
+    start: today,
+    end: today,
   };
   variants.value = [];
   variantsStock.value = [];

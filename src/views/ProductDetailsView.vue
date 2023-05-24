@@ -118,7 +118,6 @@ const fetchAllData = () => {
   axios.get(`/products/variants/${props.id}`)
     .then(response => {
       variants.value = response.variants;
-      console.log(response.variants);
       total.value = {
         stock: 0,
         preorder: 0,
@@ -143,6 +142,10 @@ const fetchAllData = () => {
   axios.get(`/products/search/id/${props.id}`)
     .then(response => {
       productDetails.value = response;
+      selectedDate.value.start = new Date(response.date_start);
+      selectedDate.value.end = new Date(response.date_end);
+      pickerView.month = selectedDate.value.start.getMonth();
+      pickerView.year = selectedDate.value.start.getFullYear();
       const dateObject = new Date(productDetails.value.created_at);
       const startDateObject = new Date(productDetails.value.date_start);
       const endDateObject = new Date(productDetails.value.date_end);
@@ -168,13 +171,13 @@ const DateStart = ref('');
 const DateEnd = ref('');
 const DateCreated = ref('');
 const today= new Date();
-const dayNow = today.getDate();
+const dayNow = today.getDate;
 const monthNow = today.getMonth();
 const yearNow = today.getFullYear();
 
 const selectedDate = ref({
-  start: productDetails.value.date_start || today,
-  end: productDetails.value.date_end|| today,
+  start: today,
+  end: today,
 });
 
 const pickerView = reactive({
@@ -190,17 +193,12 @@ const handleMonthChange = ({ month, year }) => {
 // functions call API products
 const deleteProduct= () => {
   axios.put(`/products/deactivate/${props.id}`)
-    .then(
-      response => {
-        isSuccess.value = true;
-        router.push({
-          name: 'products',
-          params: {},
-        });
-        setTimeout(() => {
-          isSuccess.value = false;
-        }, 2500);
-      })
+    .then(response => {
+      router.push({
+        name: 'products',
+        params: {},
+      });
+    })
     .catch(
       error => {
         console.log(error);
@@ -218,7 +216,6 @@ const updateProduct= () => {
   console.log(fields);
   axios.put('/products/activate', fields)
     .then(response => {
-      console.log(response);
       isSuccess.value = true;
       fetchAllData();
       setTimeout(() => {
@@ -227,13 +224,22 @@ const updateProduct= () => {
     })
     .catch(error => {
       console.log(error);
+      errors.value = error.response.data.errors;
     });
 };
 
 const fullfilProduct = () => {
-  axios.put(`/products/fullfil/${props.id}`)
+
+  const submitArrayFulfill = variants.value.map(element => {
+    return {
+      id: element.id,
+      stock: element.stock,
+    };
+  });
+
+  console.log(submitArrayFulfill);
+  axios.put('/products/fullfil', submitArrayFulfill)
     .then(response => {
-      console.log(response);
       isSuccess.value = true;
       setTimeout(() => {
         isSuccess.value = false;
