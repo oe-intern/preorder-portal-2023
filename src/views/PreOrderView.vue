@@ -71,7 +71,7 @@ placeholder="Search preorder by customerName").search-input
             router-link(to="#")
               ul
                 li.customer-name {{ preOrder.customer.name }}
-                li.customer-email {{ preOrder.customer.email || preOder.customer.phone }}
+                li.customer-email {{ preOrder.customer.email }} / {{ preOder.customer.phone }}
                 li.customer-location {{ preOrder.customer.address }}
           td.pre-item
             span(:class="preOrder.status=== 1 ? 'active' : 'inactive' ") {{ preOrder.status=== 1 ? 'complete' : 'pending' }}
