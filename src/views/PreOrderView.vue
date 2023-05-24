@@ -74,7 +74,7 @@ placeholder="Search preorder by customerName").search-input
                 li.customer-email {{ preOrder.customer.email }} - {{ preOder.customer.phone }}
                 li.customer-location {{ preOrder.customer.address }}
           td.pre-item
-            span(:class="product.status=== 1 ? 'active' : 'inactive' ") {{ product.status=== 1 ? 'active' : 'inactive' }}
+            span(:class="preOrder.status=== 1 ? 'active' : 'inactive' ") {{ preOrder.status=== 1 ? 'complete' : 'pending' }}
           td.product-date.pre-item {{ preOrder.created_at }}
           td.product-quantity.pre-item {{ preOrder.quantity }}
           td.product-total.pre-item {{ preOrder.total }}$
