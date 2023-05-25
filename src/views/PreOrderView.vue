@@ -8,7 +8,7 @@
     .title-header
       span Preorders
     .content-header
-      button.btn-fulfill(:class="{'no-blur' : isChecked}" @click="isChecked? handelShipping() : isChecked=false")  Ready to Shipping
+      button.btn-fulfill(:class="{'no-blur' : isChecked}" @click="isChecked? handelShipping() : isChecked=false") Ready to Complete
   .pre-order-task-bar
     .pre-order-search
       label(for="searchProduct").search-icon
@@ -43,7 +43,7 @@ name="sortType").sort-by-list
   v-model="isCheckedAll",
   type="checkbox",
   @change="handleToggleCheckAll").pre-check-box#pre-check-all
-          th(colspan="1").pre-reference.pre-header-item Reference#
+          th(colspan="1").pre-reference.pre-header-item Variant#
           th(colspan="1").pre-customer.pre-header-item Customer
           th(colspan="1").pre-header-item Address
           th(colspan="1").pro-status.pre-header-item
@@ -77,7 +77,8 @@ name="sortType").sort-by-list
               li.customer-item
                 span.customer-phone {{ preorder.customer.phone }}
                 span.customer-email {{ preorder.customer.email }}
-          td.customer-location.pre-item {{ preorder.customer.address }}
+          td.pre-item
+            .customer-location {{ preorder.customer.address }}
           td.pre-item
             span(:class="preorder.status=== 1 ? 'active' : 'inactive' ") {{ preorder.status=== 1 ? 'complete' : 'pending' }}
           td.product-date.pre-item {{ preorder.dateText }}
@@ -333,6 +334,10 @@ const handelShipping= () => {
   .customer-location{
     font-size: 1rem;
     text-align: center;
+    white-space: break-spaces;
+    word-wrap: break-word;
+    max-width: 180px;
+    display: block;
   }
 
   .customer-list{

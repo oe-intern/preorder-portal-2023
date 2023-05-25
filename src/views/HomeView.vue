@@ -248,7 +248,7 @@ onMounted(async () => {
         bestSellerProducts.value[index].stock = 0;
         bestSellerProducts.value[index].preorder = 0;
         response.variants.forEach(element => {
-          bestSellerProducts.value[index].stock += element.stock;
+          bestSellerProducts.value[index].stock += element.stock + element.preorder + element.sold;
           bestSellerProducts.value[index].preorder += element.preorder;
         });
       } catch (error) {
@@ -265,7 +265,7 @@ onMounted(async () => {
         worstSellerProducts.value[index].stock = 0;
         worstSellerProducts.value[index].preorder = 0;
         response.variants.forEach(element => {
-          worstSellerProducts.value[index].stock += element.stock;
+          bestSellerProducts.value[index].stock += element.stock + element.preorder + element.sold;
           worstSellerProducts.value[index].preorder += element.preorder;
         });
 

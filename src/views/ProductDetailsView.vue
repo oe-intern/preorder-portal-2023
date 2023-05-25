@@ -125,7 +125,7 @@ const fetchAllData = () => {
       };
       variantsStock.value = response.variants.map(
         item => {
-          total.value.stock += item.stock;
+          total.value.stock += item.stock + item.preorder + item.sold;
           total.value.preorder+= item.preorder;
           total.value.sold += item.sold;
 

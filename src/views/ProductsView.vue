@@ -189,7 +189,7 @@ const fetchDataSearch = async newValue => {
 
     product.variants = array;
     array.forEach(variant => {
-      product.stock += variant.stock;
+      product.stock += variant.stock + variant.preorder + variant.sold;
       product.preorder += variant.preorder;
       product.sold += variant.sold;
     });
@@ -259,7 +259,7 @@ const fetchAllInfoProduct = async () => {
 
     product.variants = array;
     array.forEach(variant => {
-      product.stock += variant.stock;
+      product.stock += variant.stock + variant.preorder + variant.sold;
       product.preorder += variant.preorder;
       product.sold += variant.sold;
     });
@@ -550,6 +550,10 @@ const fulFill = () => {
   .product-name{
     width: 150px;
     overflow-x: hidden;
+  }
+  .customer-location{
+    max-width: 200px;
+    word-wrap: break-word;
   }
   .pro-order-page {
     padding-top: 40px;
