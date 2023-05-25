@@ -7,19 +7,24 @@
     .home-overview.flex.row
       .overview-item.col-12.col-lg-5
         .sale-title
-          span.title-text Sale in last 7 days
-          h1.title-amount &eth;0
+          span.title-text Preorder In Last 7 Days
+          h1.title-amount {{ totalPreorder }}
         .sale-chart
           .chart-item(v-for="(data,index) in dataChart" :key="index")
             .chart-node(:style="{bottom: `${data/maxChart * 100}%`}")
             .chart-item-text
               span {{ dataDayChart[index] }}
-              span.item-text Sales: {{ data }}$
+              span Preorder: {{ data }}
+              span.item-text Sales: {{ saleDay[index] }}$
               //- overview-2
-      .overview-item.col-12.col-lg-3
+      .overview-item.overview-total
         .sale-title
-          span.title-text Open Pre-order Products
+          span.title-text Products That Allow Preorder
           h1.title-amount.text-product {{ numberProduct }}
+      .overview-item.overview-total
+        .sale-title
+          span.title-text Total Proceeds In 7 Days
+          h1.title-amount {{ totalSale }}$
     .home-analytics
       canvas( ref="chart", style="width: 100%;height: 400px;" ).chart-home-analytics
     .home-summary.col.row
@@ -93,6 +98,9 @@ const numberProduct =ref(0);
 const dataDayChart = [];
 const dataChart = [0, 0, 0, 0, 0, 0, 0];
 const maxChart = ref(0);
+const saleDay = ref([0, 0, 0, 0, 0, 0, 0]);
+const totalSale = ref(0);
+const totalPreorder = ref(0);
 
 for (let i = 6; i >= 0; i-=1) {
   const date = new Date();
@@ -121,23 +129,6 @@ const showProduct = id => {
 onMounted(async () => {
   const ctx = chart.value.getContext('2d');
 
-  new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: dataDayChart,
-      datasets: [
-        {
-          label: 'Number of products sold',
-          data: dataChart,
-          fill: false,
-          borderColor: 'rgb(75, 192, 192)',
-          tension: 0.1,
-        },
-      ],
-    },
-    options: { maintainAspectRatio: false },
-  });
-
   await axios.post('/products')
     .then(response => {
       console.log(response);
@@ -158,47 +149,75 @@ onMounted(async () => {
     .then(response => {
       preorders.value = response;
 
+      console.log(response);
+
       return response;
     })
     .then(response => {
       response.forEach(element => {
-        if (element.create_at >= sevenDayAgo) {
-          const disDay = element.create_at.getDate() - sevenDayAgo.getDate();
+        const preorderDate = new Date(element.created_at);
+
+        if (preorderDate >= sevenDayAgo) {
+          const disDay = preorderDate.getDate() - sevenDayAgo.getDate();
 
           switch (disDay) {
             case 0:
-              dataChart[6]+=1;
-              maxChart.value = Math.max(dataChart[6], maxChart);
+              dataChart[0]+=1;
+              totalPreorder.value +=1;
+              saleDay.value[0]+= element.quantity * parseFloat(element.variant.price);
+              totalSale.value += saleDay.value[0];
+              maxChart.value = Math.max(dataChart[0], maxChart.value);
               break;
             case 1:
-              dataChart[5]+=1;
-              maxChart.value = Math.max(dataChart[5], maxChart);
+              dataChart[1]+=1;
+              totalPreorder.value +=1;
+              saleDay.value[1]+= element.quantity * parseFloat(element.variant.price);
+              totalSale.value += saleDay.value[1];
+              maxChart.value = Math.max(dataChart[1], maxChart.value);
               break;
             case 2:
-              dataChart[4]+=1;
-              maxChart.value = Math.max(dataChart[4], maxChart);
+              dataChart[2]+=1;
+              totalPreorder.value +=1;
+              saleDay.value[2]+= element.quantity * parseFloat(element.variant.price);
+              totalSale.value += saleDay.value[2];
+              maxChart.value = Math.max(dataChart[2], maxChart.value);
               break;
             case 3:
               dataChart[3]+=1;
-              maxChart.value = Math.max(dataChart[3], maxChart);
+              totalPreorder.value +=1;
+              saleDay.value[3]+= element.quantity * parseFloat(element.variant.price);
+              totalSale.value += saleDay.value[3];
+              maxChart.value = Math.max(dataChart[3], maxChart.value);
               break;
             case 4:
-              dataChart[2]+=1;
-              maxChart.value = Math.max(dataChart[2], maxChart);
+              dataChart[4]+=1;
+              totalPreorder.value +=1;
+              saleDay.value[4]+= element.quantity * parseFloat(element.variant.price);
+              totalSale.value += saleDay.value[4];
+              maxChart.value = Math.max(dataChart[4], maxChart.value);
               break;
             case 5:
-              dataChart[1]+=1;
-              maxChart.value = Math.max(dataChart[1], maxChart);
+              dataChart[5]+=1;
+              totalPreorder.value +=1;
+              saleDay.value[5]+= element.quantity * parseFloat(element.variant.price);
+              totalSale.value += saleDay.value[5];
+              maxChart.value = Math.max(dataChart[5], maxChart.value);
               break;
             case 6:
-              dataChart[0]+=1;
-              maxChart.value = Math.max(dataChart[0], maxChart);
+              dataChart[6]+=1;
+              totalPreorder.value +=1;
+              saleDay.value[6]+= element.quantity * parseFloat(element.variant.price);
+              totalSale.value += saleDay.value[6];
+              maxChart.value = Math.max(dataChart[6], maxChart.value);
               break;
             default:
               break;
           }
         }
       });
+
+      console.log(dataChart);
+      console.log(maxChart.value);
     })
     .catch(error => {
       console.log(error);
@@ -256,6 +275,22 @@ onMounted(async () => {
     }),
   );
 
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: dataDayChart,
+      datasets: [
+        {
+          label: 'Number of preorder for each day',
+          data: dataChart,
+          fill: false,
+          borderColor: 'rgb(75, 192, 192)',
+          tension: 0.1,
+        },
+      ],
+    },
+    options: { maintainAspectRatio: false },
+  });
 });
 </script>
 
@@ -271,6 +306,9 @@ onMounted(async () => {
   .home-content {
     .home-overview {
       margin-top: 24px;
+      .overview-total{
+        width: auto!important;
+      }
       .overview-item {
         display: flex;
         flex-direction: row;
@@ -354,11 +392,12 @@ onMounted(async () => {
               background: white;
               display: none;
               flex-direction: column;
-              height: 100%;
-              min-width: 75px;
+              min-width: 150px;
               justify-content: center;
               text-align: center ;
               position: absolute;
+              top: 50%;
+              transform: translateY(calc(-50% - 5px));
               border: 1px solid $border-color;
               &:hover{
                 display: none;

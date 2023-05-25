@@ -22,10 +22,13 @@ placeholder="Search Preorder By Customer Name").search-input
     .pre-order-sort
       .sort-by
         label( for="sort-by-list" ).title-sort-by Sort by
-        select(id="sort-by-list" v-mode="sortType" ).sort-by-list
+        select(
+id="sort-by-list"
+v-model="sortType"
+name="sortType").sort-by-list
           option.sort-by-item(
             value=""
-            hidden) Chose the type
+            hidden) Choose the type
           option(value="newest").sort-by-item Newest first
           option(value="oldest").sort-by-item Oldest first
           option(value="the most expensive").sort-by-item The most expensive first
@@ -42,6 +45,7 @@ placeholder="Search Preorder By Customer Name").search-input
   @change="handleToggleCheckAll").pre-check-box#pre-check-all
           th(colspan="1").pre-reference.pre-header-item Reference#
           th(colspan="1").pre-customer.pre-header-item Customer
+          th(colspan="1").pre-header-item Address
           th(colspan="1").pro-status.pre-header-item
             div.status-cover
               span Status
@@ -73,10 +77,10 @@ placeholder="Search Preorder By Customer Name").search-input
               li.customer-item
                 span.customer-phone {{ preorder.customer.phone }}
                 span.customer-email {{ preorder.customer.email }}
-              li.customer-location {{ preorder.customer.address }}
+          td.customer-location.pre-item {{ preorder.customer.address }}
           td.pre-item
             span(:class="preorder.status=== 1 ? 'active' : 'inactive' ") {{ preorder.status=== 1 ? 'complete' : 'pending' }}
-          td.product-date.pre-item {{ preorder.created_at }}
+          td.product-date.pre-item {{ preorder.dateText }}
           td.product-quantity.pre-item {{ preorder.quantity }}
           td.product-total.pre-item {{ preorder.total }}$
 </template>
@@ -101,25 +105,46 @@ const isChecked = ref(false);
 const searchPreorder = ref('');
 const sortType = ref('');
 
-const fetchPreorder = newValue => {
+const fetchPreorder = async newValue => {
   if (newValue) {
-    axios.get(`/preorders/${newValue}`)
+    await axios.get(`/preorders/${newValue}`)
       .then(response => {
         preorders.value = response;
+        const options = {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+        };
+
         preorders.value.forEach((element, index) => {
           preorders.value[index].total = parseFloat(element.variant.price) * element.quantity;
+
+          const createAt = new Date(element.created_at);
+
+          preorders.value[index].dateText = createAt.toLocaleDateString('en-US', options);
         });
+
         arrayId.value = response.map(element => element.id);
       })
       .catch(error => {
         console.log(error);
       });
   } else {
-    axios.get('/preorders')
+    await axios.get('/preorders/')
       .then(response => {
         preorders.value = response;
+        const options = {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+        };
+
         preorders.value.forEach((element, index) => {
           preorders.value[index].total = parseFloat(element.variant.price) * element.quantity;
+
+          const createAt = new Date(element.created_at);
+
+          preorders.value[index].dateText = createAt.toLocaleDateString('en-US', options);
         });
         arrayId.value = response.map(element => element.id);
       })
@@ -130,45 +155,8 @@ const fetchPreorder = newValue => {
 
 };
 
-const handleToggleCheckAll = e => {
-  if (isCheckedAll.value) {
-    preorderCheck.value = arrayId.value;
-    isChecked.value = true;
-  } else {
-    preorderCheck.value = [];
-    isChecked.value = false;
-  }
-};
+const sortByType = newValue => {
 
-const handleCheckbox = e => {
-  if (preorderCheck.value.length === arrayId.value.length) {
-    isCheckedAll.value = true;
-    isChecked.value = true;
-  } else if (preorderCheck.value.length >0) {
-    isChecked.value = true;
-    isCheckedAll.value = false;
-  } else {
-    isCheckedAll.value = false;
-    isChecked.value = false;
-  }
-};
-
-let handler = null;
-
-watch(searchPreorder, (newValue, oldValue) => {
-  if (newValue === '') {
-    clearTimeout(handler);
-    fetchPreorder();
-  } else {
-    clearTimeout(handler);
-
-    handler = setTimeout(() => {
-      fetchPreorder(newValue);
-    }, 500);
-  }
-});
-
-watch(sortType.value, (newValue, oldValue) => {
   switch (newValue) {
     case 'newest':
       preorders.value.sort((a, b) => {
@@ -226,6 +214,8 @@ watch(sortType.value, (newValue, oldValue) => {
         const x = a.total;
         const y = b.total;
 
+        console.log(x, y);
+
         if (x>y) {
           return 1;
         }
@@ -241,6 +231,49 @@ watch(sortType.value, (newValue, oldValue) => {
     default:
       break;
   }
+};
+
+const handleToggleCheckAll = e => {
+  if (isCheckedAll.value) {
+    preorderCheck.value = arrayId.value;
+    isChecked.value = true;
+  } else {
+    preorderCheck.value = [];
+    isChecked.value = false;
+  }
+};
+
+const handleCheckbox = e => {
+  if (preorderCheck.value.length === arrayId.value.length) {
+    isCheckedAll.value = true;
+    isChecked.value = true;
+  } else if (preorderCheck.value.length >0) {
+    isChecked.value = true;
+    isCheckedAll.value = false;
+  } else {
+    isCheckedAll.value = false;
+    isChecked.value = false;
+  }
+};
+
+let handler = null;
+
+watch(searchPreorder, async (newValue, oldValue) => {
+  if (newValue === '') {
+    clearTimeout(handler);
+    await fetchPreorder();
+    sortByType(sortType.value);
+  } else {
+    clearTimeout(handler);
+    handler = setTimeout(async () => {
+      await fetchPreorder(newValue);
+      sortByType(sortType.value);
+    }, 500);
+  }
+});
+
+watch(sortType, (newValue, oldValue) => {
+  sortByType(newValue);
 });
 
 onMounted(() => {
@@ -258,7 +291,7 @@ onMounted(() => {
 
         const createAt = new Date(element.created_at);
 
-        preorders.value[index].created_at = createAt.toLocaleDateString('en-US', options);
+        preorders.value[index].dateText = createAt.toLocaleDateString('en-US', options);
       });
       console.log(preorders.value);
       arrayId.value = response.map(element => element.id);
@@ -269,11 +302,11 @@ onMounted(() => {
 });
 
 const handelShipping= () => {
-  console.log(preorderCheck.value);
   axios.post('preorder/shipping', preorderCheck.value)
-    .then(response => {
+    .then(async response => {
       console.log(response);
       isSuccess.value = true;
+      await fetchPreorder();
       setTimeout(() => {
         isSuccess.value = false;
       }, 2500);
@@ -288,12 +321,17 @@ const handelShipping= () => {
 @import '@/scss/variables.scss';
 .pre-order-page {
   padding-top: 40px;
+  .product-customer{
+    padding: 12px 40px!important;
+  }
+  .product-quantity{
+      text-align: center!important;
+    }
   .pre-check{
     text-align: center!important;;
   }
   .customer-location{
-    display: block;
-    width: 100%;
+    font-size: 1rem;
     text-align: center;
   }
 

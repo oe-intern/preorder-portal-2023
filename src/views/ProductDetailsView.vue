@@ -194,7 +194,7 @@ const handleMonthChange = ({ month, year }) => {
   pickerView.year = year;
 };
 
-// functions call API products
+// inactive product
 const deleteProduct= () => {
   axios.put(`/products/deactivate/${props.id}`)
     .then(response => {

@@ -10,6 +10,7 @@
     .content-header
       button.btn-fulfill(:class="{'no-blur' : isChecked}" @click="isChecked? fulFill() : isChecked=false" ) Ready to FulFill
       button(@click="handelAddNewProduct").btn-fulfill.no-blur Add new product
+  .error-message(v-if="notificationMessage.error") {{ notificationMessage.error }}
   .pro-order-task-bar
     .pro-order-search
       label(for="searchProduct").search-icon
@@ -29,7 +30,7 @@
           name="typeSort" )
           option.sort-by-item(
             value=""
-            hidden) Chose the type
+            hidden) Choose the type
           option(value="newest").sort-by-item Newest
           option(value="oldest").sort-by-item Oldest
           option(value="abc").sort-by-item Alphabet
@@ -40,7 +41,7 @@
         label( for="status" ).title-sort-by Status is
         select(id="status" v-model="searchStatus" ).sort-by-list
           option(value="all").sort-by-item ALL
-          option(value="preOrder").sort-by-item Pre-Order
+          option(value="preorder").sort-by-item Active
   .pro-order-list
     table.pro-order-table.overflow-column.separate-border
       thead
@@ -70,12 +71,13 @@ v-for="(product ,index) in products"
           td(colspan="1").pro-check.pro-item
             label( :for="product.id").pro-check-cover
               input(
+  v-show="product.status===1",
   :id="product.id",
   :ref="checkItem",
   v-model="productCheck",
   type="checkbox",
   :value="product.id",
-  @change="handleCheckbox",
+  @change="handleCheckbox"
   ).pro-check-box.pro-check-item
           td.product-refer.pro-item
             div(style="margin-left: 24px;")
@@ -116,9 +118,12 @@ import SearchMajor from '@icons/SearchMajor.svg';
 import {
   inject, ref, onMounted, watch,
 } from 'vue';
+import { elements } from 'chart.js';
 
 const productCheck = ref([]);
 const router = useRouter();
+
+const notificationMessage= ref({});
 
 const searchStatus = ref('all');
 const searchType = ref('');
@@ -262,59 +267,7 @@ const fetchAllInfoProduct = async () => {
   });
 };
 
-//function run when call
-const handelAddNewProduct = () => {
-  router.push({
-    name: 'addPreProduct',
-    params: {},
-  });
-};
-
-const handleToggleCheckAll = e => {
-  if (isCheckedAll.value) {
-    productCheck.value = arrayId.value;
-    isChecked.value = true;
-  } else {
-    productCheck.value = [];
-    isChecked.value = false;
-  }
-};
-
-const handleCheckbox = e => {
-  if (productCheck.value.length === arrayId.value.length) {
-    isCheckedAll.value = true;
-    isChecked.value = true;
-  } else if (productCheck.value.length >0) {
-    isChecked.value = true;
-    isCheckedAll.value = false;
-  } else {
-    isCheckedAll.value = false;
-    isChecked.value = false;
-  }
-};
-
-const showProduct = id => {
-  router.push({
-    name: 'detailsProduct',
-    params: { id: id },
-  });
-};
-
-watch(searchStatus, (newValue, oldValue) => {
-  switch (newValue) {
-    case 'all':
-      fetchAllInfoProduct();
-      break;
-    case 'preOrder':
-      products.value = products.value.filter(elements => elements.status===1);
-      arrayId.value = products.value.map(item => item.id);
-      break;
-    default:
-      break;
-  }
-});
-
-watch(searchType, (newValue, oldValue) => {
+const sortByType = newValue => {
   switch (newValue) {
     case 'newest':
       products.value.sort((a, b) => {
@@ -460,63 +413,134 @@ watch(searchType, (newValue, oldValue) => {
     default:
       break;
   }
+};
+//function run when call
+const handelAddNewProduct = () => {
+  router.push({
+    name: 'addPreProduct',
+    params: {},
+  });
+};
+
+const handleToggleCheckAll = e => {
+  const isActive = products.value.find(element => element.status === 1);
+
+  if (isCheckedAll.value && isActive) {
+    productCheck.value = arrayId.value;
+    isChecked.value = true;
+  } else {
+    productCheck.value = [];
+    isChecked.value = false;
+  }
+};
+
+const handleCheckbox = e => {
+  if (productCheck.value.length === arrayId.value.length) {
+    isCheckedAll.value = true;
+    isChecked.value = true;
+  } else if (productCheck.value.length >0) {
+    isChecked.value = true;
+    isCheckedAll.value = false;
+  } else {
+    isCheckedAll.value = false;
+    isChecked.value = false;
+  }
+};
+
+const showProduct = id => {
+  router.push({
+    name: 'detailsProduct',
+    params: { id: id },
+  });
+};
+
+watch(searchStatus, async (newValue, oldValue) => {
+  switch (newValue) {
+    case 'all':
+      if (!searchProduct.value.trim()) {
+        await fetchAllInfoProduct();
+        sortByType(searchType.value);
+      } else {
+        await fetchDataSearch(searchProduct.value);
+        sortByType(searchType.value);
+      }
+
+      break;
+    case 'preorder':
+      products.value = products.value.filter(elements => elements.status===1);
+      sortByType(searchType.value);
+      break;
+    default:
+      break;
+  }
+});
+
+watch(searchType, (newValue, oldValue) => {
+  sortByType(newValue);
 });
 
 let handler = null;
 
-watch(searchProduct, (newValue, oldValue) => {
+watch(searchProduct, async (newValue, oldValue) => {
   if (!newValue.trim()) {
     clearTimeout(handler);
-    fetchAllInfoProduct();
+    await fetchAllInfoProduct();
+    searchStatus.value='all';
+    sortByType(searchType.value);
   } else {
     clearTimeout(handler);
-    handler = setTimeout(() => {
-      fetchDataSearch(newValue);
+    handler = setTimeout(async () => {
+      await fetchDataSearch(newValue);
+      searchStatus.value='all';
+      sortByType(searchType.value);
     }, 500);
   }
 });
 
 //when component mount function is call
-onMounted(() => {
-  fetchAllInfoProduct();
+onMounted(async () => {
+  await fetchAllInfoProduct();
 });
 
 const fulFill = () => {
 
-  const arraySubmit = products.value.map((product, index) => {
-    if (productCheck.value.includes(product.id)) {
+  const arrayVariants = products.value.map(product => {
+    if (productCheck.value.includes(product.id) && product.status === 1) {
       return product.variants;
     }
 
     return null;
   });
 
-  console.log(arraySubmit);
+  const arrayFilter = arrayVariants.filter(element => element!==null);
 
-  arraySubmit.filter(element => !!element);
-
-  console.log(arraySubmit);
-
-  arraySubmit.forEach((variants, index) => {
-    arraySubmit[index] = variants.map(variant => {
+  arrayFilter.forEach((variants, index) => {
+    arrayFilter[index] = variants.map(variant => {
       return {
         id: variant.id,
         stock: variant.stock,
       };
     });
   });
-  console.log(arraySubmit);
 
-  axios.post('/products/fulfill', productCheck.value)
-    .then(() => {
-      isSuccess.value = true;
-      setTimeout(() => {
-        isSuccess.value = false;
-      }, 2500);
-    })
-    .catch(error => {
-      console.log(error);
-    });
+  if (arrayFilter.length >0) {
+    notificationMessage.value.error=null;
+
+    const arraySubmit = arrayFilter.flat();
+
+    axios.post('/products/fulfill', arraySubmit)
+      .then(() => {
+        isSuccess.value = true;
+        setTimeout(() => {
+          isSuccess.value = false;
+        }, 2500);
+      })
+      .catch(error => {
+        console.log(error);
+      });
+  } else {
+    notificationMessage.value.error = 'Can\'t find selected product with status as active ';
+  }
 };
 
 </script>
