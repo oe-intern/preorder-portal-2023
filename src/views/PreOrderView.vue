@@ -303,11 +303,16 @@ onMounted(() => {
 });
 
 const handelShipping= () => {
-  axios.post('preorders/fulfill', preorderCheck.value)
+  axios.put('/preorders/fulfill', preorderCheck.value)
     .then(async response => {
       console.log(response);
       isSuccess.value = true;
       await fetchPreorder();
+      sortType.value = '';
+      searchPreorder.value = '';
+      preorderCheck.value = [];
+      isCheckedAll.value = false;
+      isChecked.value = false;
       setTimeout(() => {
         isSuccess.value = false;
       }, 2500);

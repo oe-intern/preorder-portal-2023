@@ -529,8 +529,15 @@ const fulFill = () => {
     const arraySubmit = arrayFilter.flat();
 
     axios.post('/products/fulfill', arraySubmit)
-      .then(() => {
+      .then(async () => {
         isSuccess.value = true;
+        await fetchAllInfoProduct();
+        productCheck.value = [];
+        isChecked.value = false;
+        isCheckedAll.value = false;
+        searchProduct.value = '';
+        searchStatus.value = 'all';
+        searchType.value = '';
         setTimeout(() => {
           isSuccess.value = false;
         }, 2500);

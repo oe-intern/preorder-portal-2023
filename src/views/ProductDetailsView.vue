@@ -247,7 +247,11 @@ const fullfilProduct = () => {
       isSuccess.value = true;
       setTimeout(() => {
         isSuccess.value = false;
-      }, 2500);
+        router.push({
+          name: 'products',
+          params: {},
+        });
+      }, 1500);
     })
     .catch(error => {
       console.log(error);
