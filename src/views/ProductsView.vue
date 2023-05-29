@@ -96,14 +96,14 @@ v-for="(product ,index) in products"
             span.date-to {{ product.date_end ? product.date_end : '' }}
           td.product-shell.pro-item
             .shell-header
-              span.shell-title {{ product.stock!==0 ?product.preorder /product.stock * 100 : 0 }} %
+              span.shell-title {{ product.stock!==0 ? Number((product.preorder /product.stock * 100).toFixed(2)) : 0 }} %
               span.shell-text ( {{ product.preorder }} / {{ product.stock }} units)
             progress(
               max="100"
               :value="product.stock!==0 ? product.preorder / product.stock * 100 : 0" ).shell-progress
           td.product-shell.pro-item
             .shell-header
-              span.shell-title {{ product.stock!==0 ?product.sold /product.stock * 100 : 0 }} %
+              span.shell-title {{ product.stock!==0 ? Number((product.sold /product.stock * 100).toFixed(2)) : 0 }} %
               span.shell-text ( {{ product.sold }} / {{ product.stock }} units)
             progress(
               max="100"
