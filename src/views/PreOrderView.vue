@@ -8,7 +8,7 @@
     .title-header
       span Preorders
     .content-header
-      button.btn-fulfill(:class="{'no-blur' : isChecked}" @click="isChecked? handelShipping() : isChecked=false") Ready to Complete
+      button.btn-fulfill(:class="{'no-blur' : isChecked}" @click="isChecked? handelShipping() : isChecked=false") Ready to Fulfill
   .pre-order-task-bar
     .pre-order-search
       label(for="searchProduct").search-icon
@@ -303,7 +303,7 @@ onMounted(() => {
 });
 
 const handelShipping= () => {
-  axios.post('preorder/shipping', preorderCheck.value)
+  axios.post('preorders/fulfill', preorderCheck.value)
     .then(async response => {
       console.log(response);
       isSuccess.value = true;

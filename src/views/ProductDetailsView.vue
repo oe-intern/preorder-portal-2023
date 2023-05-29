@@ -234,15 +234,15 @@ const updateProduct= () => {
 
 const fullfilProduct = () => {
 
-  const submitArrayFulfill = variants.value.map(element => {
-    return {
-      id: element.id,
-      stock: element.stock,
-    };
-  });
+  // const submitArrayFulfill = variants.value.map(element => {
+  //   return {
+  //     id: element.id,
+  //     stock: element.stock,
+  //   };
+  // });
 
-  console.log(submitArrayFulfill);
-  axios.put('/products/fullfil', submitArrayFulfill)
+  // console.log(submitArrayFulfill);
+  axios.put(`/products/fulfill/${props.id}`)
     .then(response => {
       isSuccess.value = true;
       setTimeout(() => {

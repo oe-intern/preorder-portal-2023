@@ -281,7 +281,7 @@ onMounted(async () => {
       labels: dataDayChart,
       datasets: [
         {
-          label: 'Number of preorder for each day',
+          label: 'Number of preorders',
           data: dataChart,
           fill: false,
           borderColor: 'rgb(75, 192, 192)',

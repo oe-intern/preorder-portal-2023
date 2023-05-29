@@ -506,7 +506,7 @@ const fulFill = () => {
 
   const arrayVariants = products.value.map(product => {
     if (productCheck.value.includes(product.id) && product.status === 1) {
-      return product.variants;
+      return product.id;
     }
 
     return null;
@@ -514,14 +514,14 @@ const fulFill = () => {
 
   const arrayFilter = arrayVariants.filter(element => element!==null);
 
-  arrayFilter.forEach((variants, index) => {
-    arrayFilter[index] = variants.map(variant => {
-      return {
-        id: variant.id,
-        stock: variant.stock,
-      };
-    });
-  });
+  // arrayFilter.forEach((variants, index) => {
+  //   arrayFilter[index] = variants.map(variant => {
+  //     return {
+  //       id: variant.id,
+  //       stock: variant.stock,
+  //     };
+  //   });
+  // });
 
   if (arrayFilter.length >0) {
     notificationMessage.value.error=null;
