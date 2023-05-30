@@ -45,7 +45,7 @@
                 .content-sale-text
                   span.name-product-sale {{ bestSellerProduct.title }}
                   .sale-precess-text
-                    span.number-sale {{ bestSellerProduct.stock ? bestSellerProduct.preorder / bestSellerProduct.stock *100 : 0 }}%
+                    span.number-sale {{ bestSellerProduct.stock ? Number((bestSellerProduct.preorder / bestSellerProduct.stock *100).toFixed(2)) : 0 }}%
                     span.units-sale ({{ bestSellerProduct.preorder }} / {{ bestSellerProduct.stock }} units)
                 .sale-precess-bar
                   progress( max="100" value="50").progress-bar
@@ -66,7 +66,7 @@
                 .content-sale-text
                   span.name-product-sale {{ worstSellerProduct.title }}
                   .sale-precess-text
-                    span.number-sale {{ worstSellerProduct.stock ? worstSellerProduct.preorder / worstSellerProduct.stock : 0 }}%
+                    span.number-sale {{ worstSellerProduct.stock ? Number((worstSellerProduct.preorder / worstSellerProduct.stock * 100).toFixed(2)) : 0 }}%
                     span.units-sale ({{ worstSellerProduct.preorder }} / {{ worstSellerProduct.stock }} units)
                 .sale-precess-bar
                   progress( max="100" value="50").progress-bar

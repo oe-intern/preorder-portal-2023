@@ -159,7 +159,7 @@ const fetchPreorder = async newValue => {
 const sortByType = newValue => {
 
   switch (newValue) {
-    case 'newest':
+    case 'oldest':
       preorders.value.sort((a, b) => {
         const x = a.created_at;
         const y = b.created_at;
@@ -176,7 +176,7 @@ const sortByType = newValue => {
       });
       arrayId.value = preorders.value.map(element => element.id);
       break;
-    case 'oldest':
+    case 'newest':
       preorders.value.sort((a, b) => {
         const x = a.created_at;
         const y = b.created_at;
