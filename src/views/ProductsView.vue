@@ -528,7 +528,7 @@ const fulFill = () => {
 
     const arraySubmit = arrayFilter.flat();
 
-    axios.post('/products/fulfill', arraySubmit)
+    axios.put('/products/fulfill', arraySubmit)
       .then(async () => {
         isSuccess.value = true;
         await fetchAllInfoProduct();
