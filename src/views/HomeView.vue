@@ -45,10 +45,10 @@
                 .content-sale-text
                   span.name-product-sale {{ bestSellerProduct.title }}
                   .sale-precess-text
-                    span.number-sale {{ bestSellerProduct.stock ? Number((bestSellerProduct.preorder / bestSellerProduct.stock *100).toFixed(2)) : 0 }}%
-                    span.units-sale ({{ bestSellerProduct.preorder }} / {{ bestSellerProduct.stock }} units)
+                    span.number-sale {{ bestSellerProduct.stock ? Number((bestSellerProduct.sold / bestSellerProduct.stock *100).toFixed(2)) : 0 }}%
+                    span.units-sale ({{ bestSellerProduct.sold }} / {{ bestSellerProduct.stock }} units)
                 .sale-precess-bar
-                  progress( max="100" value="50").progress-bar
+                  progress( max="100" :value="bestSellerProduct.sold / bestSellerProduct.stock *100").progress-bar
       .sale-th-cover.col-12.col-xl-6
         .sale-th(v-if="worstSellerProducts[0]")
           .sale-th-title
@@ -56,6 +56,7 @@
           ul.sale-list
             li.sale-item-product(
               v-for="worstSellerProduct in worstSellerProducts"
+              v-show="(typeof worstSellerProduct.sold === 'number')"
               :key="worstSellerProduct.id"
               @click.prevent="showProduct(worstSellerProduct.id)" )
               .sale-cover-photo
@@ -66,10 +67,10 @@
                 .content-sale-text
                   span.name-product-sale {{ worstSellerProduct.title }}
                   .sale-precess-text
-                    span.number-sale {{ worstSellerProduct.stock ? Number((worstSellerProduct.preorder / worstSellerProduct.stock * 100).toFixed(2)) : 0 }}%
-                    span.units-sale ({{ worstSellerProduct.preorder }} / {{ worstSellerProduct.stock }} units)
+                    span.number-sale {{ worstSellerProduct.stock ? Number((worstSellerProduct.sold / worstSellerProduct.stock * 100).toFixed(2)) : 0 }}%
+                    span.units-sale ({{ worstSellerProduct.sold }} / {{ worstSellerProduct.stock }} units)
                 .sale-precess-bar
-                  progress( max="100" value="50").progress-bar
+                  progress( max="100" :value="worstSellerProduct.sold / worstSellerProduct.stock * 100").progress-bar
 </template>
 
 <script setup>
@@ -101,6 +102,7 @@ const maxChart = ref(0);
 const saleDay = ref([0, 0, 0, 0, 0, 0, 0]);
 const totalSale = ref(0);
 const totalPreorder = ref(0);
+const arrayBestSeller = ref([]);
 
 for (let i = 6; i >= 0; i-=1) {
   const date = new Date();
@@ -240,6 +242,9 @@ onMounted(async () => {
       console.log(error);
     });
   // solve stock, preorder and sold
+
+  arrayBestSeller.value = bestSellerProducts.value.map(element => element.id);
+
   await Promise.all(
     bestSellerProducts.value.map(async (element, index) => {
       try {
@@ -247,10 +252,14 @@ onMounted(async () => {
 
         bestSellerProducts.value[index].stock = 0;
         bestSellerProducts.value[index].preorder = 0;
+        bestSellerProducts.value[index].sold = 0;
         response.variants.forEach(element => {
           bestSellerProducts.value[index].stock += element.stock + element.preorder + element.sold;
           bestSellerProducts.value[index].preorder += element.preorder;
+          bestSellerProducts.value[index].sold += element.sold;
         });
+
+        return element.id;
       } catch (error) {
         console.log(error);
       }
@@ -260,15 +269,18 @@ onMounted(async () => {
   await Promise.all(
     worstSellerProducts.value.map(async (element, index) => {
       try {
-        const response = await axios.get(`/products/variants/${element.id}`);
+        if (!arrayBestSeller.value.includes(element.id)) {
+          const response = await axios.get(`/products/variants/${element.id}`);
 
-        worstSellerProducts.value[index].stock = 0;
-        worstSellerProducts.value[index].preorder = 0;
-        response.variants.forEach(element => {
-          bestSellerProducts.value[index].stock += element.stock + element.preorder + element.sold;
-          worstSellerProducts.value[index].preorder += element.preorder;
-        });
-
+          worstSellerProducts.value[index].stock = 0;
+          worstSellerProducts.value[index].preorder = 0;
+          worstSellerProducts.value[index].sold = 0;
+          response.variants.forEach(element => {
+            worstSellerProducts.value[index].stock += element.stock + element.preorder + element.sold;
+            worstSellerProducts.value[index].preorder += element.preorder;
+            worstSellerProducts.value[index].sold+= element.sold;
+          });
+        }
       } catch (error) {
         console.log(error);
       }
