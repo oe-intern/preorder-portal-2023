@@ -9,6 +9,7 @@
       span Preorders
     .content-header
       button.btn-fulfill(:class="{'no-blur' : isChecked}" @click="isChecked? handelShipping() : isChecked=false") Ready to Fulfill
+  .error-message(v-if="notificationMessage.error") {{ notificationMessage.error }}
   .pre-order-task-bar
     .pre-order-search
       label(for="searchProduct").search-icon
@@ -58,9 +59,10 @@ name="sortType").sort-by-list
           td(colspan="1").pre-check.pre-item
             label( for="all").pre-check-box
               input(
+  v-if="preorder.status !== 1",
   :id="preorder.id",
   :ref="checkItem",
-  v-model="preorderCheck",
+  v-model="preorderCheck"
   :value="preorder.id",
   type="checkbox",
   @change="handleCheckbox",).pre-check-box
@@ -105,6 +107,7 @@ const preorders = ref([]);
 const isChecked = ref(false);
 const searchPreorder = ref('');
 const sortType = ref('');
+const notificationMessage = ref({});
 
 const fetchPreorder = async newValue => {
   if (newValue) {
@@ -303,23 +306,43 @@ onMounted(() => {
 });
 
 const handelShipping= () => {
-  axios.put('/preorders/fulfill', preorderCheck.value)
-    .then(async response => {
-      console.log(response);
-      isSuccess.value = true;
-      await fetchPreorder();
-      sortType.value = '';
-      searchPreorder.value = '';
-      preorderCheck.value = [];
-      isCheckedAll.value = false;
-      isChecked.value = false;
-      setTimeout(() => {
-        isSuccess.value = false;
-      }, 2500);
-    })
-    .catch(error => {
-      console.log(error);
-    });
+  const arrayPreorderId = preorders.value.map(product => {
+    if (preorderCheck.value.includes(product.id) && product.status !== 1) {
+      return product.id;
+    }
+
+    return null;
+  });
+
+  const arrayFilter = arrayPreorderId.filter(element => element!==null);
+
+  if (arrayFilter.length >0) {
+    notificationMessage.value.error=null;
+
+    const arraySubmit = arrayFilter.flat();
+
+    console.log(arraySubmit);
+
+    axios.put('/preorders/fulfill', arraySubmit)
+      .then(async response => {
+        console.log(response);
+        isSuccess.value = true;
+        await fetchPreorder();
+        sortType.value = '';
+        searchPreorder.value = '';
+        preorderCheck.value = [];
+        isCheckedAll.value = false;
+        isChecked.value = false;
+        setTimeout(() => {
+          isSuccess.value = false;
+        }, 2500);
+      })
+      .catch(error => {
+        console.log(error);
+      });
+  } else {
+    notificationMessage.value.error = 'Can\'t find selected preorders with status as pending ';
+  }
 };
 </script>
 
